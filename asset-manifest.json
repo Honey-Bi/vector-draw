@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.js": "/static/js/main.f5f9be35.js",
-    "index.html": "/index.html",
-    "main.f5f9be35.js.map": "/static/js/main.f5f9be35.js.map"
+    "main.js": "/vector-draw/static/js/main.f5f9be35.js",
+    "index.html": "/vector-draw/index.html",
+    "main.f5f9be35.js.map": "/vector-draw/static/js/main.f5f9be35.js.map"
   },
   "entrypoints": [
     "static/js/main.f5f9be35.js"
