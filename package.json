@@ -1,8 +1,8 @@
 {
   "name": "vector-draw",
   "version": "0.1.0",
+  "homepage": "https://Honey-Bi.github.io/vector-draw",
   "private": true,
-  "homepage": "https://Honey-Bi.github.io/",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -20,11 +20,11 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "predeploy": "npm run build",
     "build": "react-scripts build",
-    "deploy": "gh-pages -d build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "deploy": "gh-pages -d build",
+    "predeploy": "npm run build"
   },
   "eslintConfig": {
     "extends": [
