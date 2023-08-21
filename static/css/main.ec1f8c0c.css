@@ -1,0 +1,2 @@
+body{background-color:#282828;background-color:var(--base-color);color:#fff;margin:0}:root{--base-color:#282828}li{list-style:none}ul{padding:0}.top-menu{&>li{float:left;&+&{margin-left:1rem}.top-sub-menu{display:none;position:absolute}&:hover{.top-sub-menu{display:block}}}}
+/*# sourceMappingURL=main.ec1f8c0c.css.map*/
