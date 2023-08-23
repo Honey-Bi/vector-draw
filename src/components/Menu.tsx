@@ -44,14 +44,19 @@ export default function Menu() {
     return () => window.removeEventListener("mousedown", handleClick);
   }, [close, menuRef]);
 
+  function Shift() {
+    return <></>;
+  }
+
   return (
     <ul className="menu" ref={menuRef}>
       <li onClick={(e) => open(e, 0)}>
         logo
         <ul className="menu-list">
           <li>About</li>
-          <li>Keyboard Shortcut</li>
-          <li></li>
+          <li>
+            Keyboard Shortcut <div className="shortcut">Ctrl + /</div>
+          </li>
         </ul>
       </li>
       <li onClick={(e) => open(e, 1)}>
@@ -59,19 +64,35 @@ export default function Menu() {
         <ul className="menu-list">
           <li>New Document</li>
           <li>Export as PNG</li>
-          <li></li>
         </ul>
       </li>
       <li onClick={(e) => open(e, 2)}>
         Edit
         <ul className="menu-list">
-          <li>Undo</li>
-          <li>Redo</li>
-          <li>Cut</li>
-          <li>Copy</li>
-          <li>Paste</li>
-          <li>Duplicate</li>
-          <li>Delete</li>
+          <li>
+            Undo <div className="shortcut">Ctrl + Z</div>
+          </li>
+          <li>
+            Redo
+            <div className="shortcut">
+              Ctrl + <Shift /> + Z
+            </div>
+          </li>
+          <li>
+            Cut<div className="shortcut">Ctrl + X</div>
+          </li>
+          <li>
+            Copy<div className="shortcut">Ctrl + C</div>
+          </li>
+          <li>
+            Paste<div className="shortcut">Ctrl + V</div>
+          </li>
+          <li>
+            Duplicate<div className="shortcut">Ctrl + D</div>
+          </li>
+          <li>
+            Delete<div className="shortcut">Delete</div>
+          </li>
         </ul>
       </li>
       <li onClick={(e) => open(e, 3)}>
@@ -81,14 +102,26 @@ export default function Menu() {
           <li>Bring Foward</li>
           <li>Send Backward</li>
           <li>Send to Back</li>
-          <li>Group Element</li>
-          <li>Ungroup Elements</li>
+          <li>
+            Group Element<div className="shortcut">Ctrl + G</div>
+          </li>
+          <li>
+            Ungroup Elements
+            <div className="shortcut">
+              Ctrl + <Shift /> + G
+            </div>
+          </li>
         </ul>
       </li>
       <li onClick={(e) => open(e, 4)}>
         View
         <ul className="menu-list">
-          <li>View Rulers</li>
+          <li>
+            <input type="checkbox" id="ruler" />
+            <label htmlFor="ruler">
+              View Rulers<div className="shortcut">Ctrl + R</div>
+            </label>
+          </li>
           <li>View Wierframes</li>
           <li>Source</li>
         </ul>
