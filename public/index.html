@@ -12,6 +12,17 @@
     <title>React App</title>
   </head>
   <body>
+    <script>
+      document.addEventListener("keydown", function (event) {
+        if (
+          (event.key === "Ctrl") |
+          (event.key === "Shift") |
+          (event.key === "Alt")
+        ) {
+          event.preventDefault();
+        }
+      });
+    </script>
     <div id="root"></div>
   </body>
 </html>
