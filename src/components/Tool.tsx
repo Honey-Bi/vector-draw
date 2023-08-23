@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Palette, Tools } from "../types";
 
+type Props = {
+  tool: Tools;
+  setTool: (tools: Tools) => void;
+  palette: Palette;
+  setPalette: (color: Palette) => void;
+};
 
-const Tool = (select: any) => {
+function Tool({ tool, setTool, palette, setPalette }: Props) {
   const xmlns = "http://www.w3.org/2000/svg";
-  const [tool, setTool] = useState<tools>("select");
 
   useEffect(() => {
     select.propFunction(tool);
