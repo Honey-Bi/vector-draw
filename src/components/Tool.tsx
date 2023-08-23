@@ -1,16 +1,5 @@
 import { useEffect, useState } from "react";
 
-type tools =
-  | "select"
-  | "pencil"
-  | "line"
-  | "rect"
-  | "circle"
-  | "shape"
-  | "path"
-  | "text"
-  | "zoom"
-  | "spoid";
 
 const Tool = (select: any) => {
   const xmlns = "http://www.w3.org/2000/svg";
