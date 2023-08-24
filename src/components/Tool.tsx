@@ -6,9 +6,10 @@ type Props = {
   setTool: (tools: Tools) => void;
   palette: Palette;
   setPalette: (color: Palette) => void;
+  shortcutTool: (e: React.KeyboardEvent) => void;
 };
 
-function Tool({ tool, setTool, palette, setPalette }: Props) {
+function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   const xmlns = "http://www.w3.org/2000/svg";
 
   const [FS, setFS] = useState<boolean>(true);
@@ -37,7 +38,7 @@ function Tool({ tool, setTool, palette, setPalette }: Props) {
   }
   return (
     <>
-      <div className="tool">
+      <div className="tool" tabIndex={0} onKeyDown={shortcutTool}>
         <div
           className={`tool-button ${tool === "select" ? "active" : ""}`}
           title="Select Tool [V]"
