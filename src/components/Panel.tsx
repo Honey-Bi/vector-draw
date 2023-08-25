@@ -6,8 +6,9 @@ type Props = {
   select: Select;
   canvasSize: Size;
   setCanvasSize: (e: Size) => void;
+  svgList: React.MutableRefObject<SvgObject[]>;
 };
-function Panel({ tool, select, canvasSize, setCanvasSize }: Props) {
+function Panel({ tool, select, canvasSize, setCanvasSize, svgList }: Props) {
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.id === "height") {
       setCanvasSize({
@@ -21,17 +22,47 @@ function Panel({ tool, select, canvasSize, setCanvasSize }: Props) {
       });
     }
   }
+
+  function ObjectChange(e: React.ChangeEvent<HTMLInputElement>, type: Tools) {}
+
   function renderPanel() {
     let result = [];
     if (select) {
-      switch (select.tagName) {
-        case "rect":
-          <div key={select.id}></div>;
-          break;
+      const type = select.id.split("-")[0] as Tools;
+      const index = Number(select.id.split("-")[1]) as number;
+      switch (type) {
         case "line":
           result.push(
             <div key={select.id}>
               <div className="select">Line</div>
+              <div className="input-group">
+                <label htmlFor="title">title</label>
+                <input
+                  className="panel-input"
+                  type="text"
+                  id="title"
+                  placeholder="NoTitle"
+                  value={svgList.current[index].title}
+                />
+              </div>
+            </div>
+          );
+          break;
+        case "rect":
+          result.push(
+            <div key={select.id}>
+              <div className="select">Line</div>
+              <div className="input-group">
+                <label htmlFor="title">title</label>
+                <input
+                  className="panel-input"
+                  type="text"
+                  id="title"
+                  placeholder="NoTitle"
+                  value={svgList.current[index].title}
+                  onChange={(e) => ObjectChange(e, type)}
+                />
+              </div>
             </div>
           );
           break;
@@ -42,12 +73,7 @@ function Panel({ tool, select, canvasSize, setCanvasSize }: Props) {
           <div className="select">Canvas</div>
           <div className="input-group">
             <label htmlFor="title">title</label>
-            <input
-              className="panel-input"
-              type="text"
-              id="title"
-              placeholder="NoTitle"
-            />
+            <input className="panel-input" type="text" id="title" placeholder="NoTitle" />
           </div>
           <div className="row">
             <div className="input-group">
