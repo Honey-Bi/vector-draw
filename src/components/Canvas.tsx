@@ -48,7 +48,7 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
           return;
         case "pencil":
           break;
-        case "line":
+        case "line": // complete
           if (palette.stroke === null) {
             result = ErrorMsg["strokeNull"];
             break;
@@ -62,8 +62,8 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
             position2: position,
           };
           break;
-        case "rect":
-          if (palette.stroke === null && palette.fill === null) {
+        case "rect": // complete
+          if (palette.fill === null && palette.stroke === null) {
             result = ErrorMsg["fillStrokeNull"];
             break;
           }
@@ -110,10 +110,10 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
           // svgList.current[svgList.current.length - 1].points?.push(position);
           // setPostion(position);
           break;
-        case "line":
+        case "line": // complete
           last.position2 = position;
           break;
-        case "rect":
+        case "rect": // complete
           if (position.x > cPosition.x) {
             // right
             last.size!.width = position.x - cPosition.x;
@@ -176,7 +176,7 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
       switch (index.type) {
         case "pencil":
           break;
-        case "line":
+        case "line": // complete
           result.push(
             <line
               key={index.title}
@@ -194,7 +194,7 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
           );
 
           break;
-        case "rect":
+        case "rect": // complete
           result.push(
             <rect
               key={index.title}
@@ -220,11 +220,10 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
               strokeWidth={index.strokeWidth}
             />
           );
-          // console.log(index);
           break;
-        case "Ellipse":
+        case "ellipse":
           break;
-        case "Polygon":
+        case "polygon":
           break;
         case "path":
           break;
