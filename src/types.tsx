@@ -21,16 +21,13 @@ type Palette = { fill: Color; stroke: Color };
 
 type KeyBind = { ctrl: boolean; shift: boolean; alt: boolean };
 
-type SvgType =
-  | "polyline"
-  | "line"
-  | "rect"
-  | "Ellipse"
-  | "Polygon"
-  | "path"
-  | "text";
+type SvgType = "pencil" | "line" | "rect" | "ellipse" | "polygon" | "path" | "text";
+
+type Command = "d" | "";
+type Shape = { command: Command; x?: number; y?: number };
 
 type SvgObject = {
+  id: string;
   title: string;
   type: SvgType;
   position?: Position;
@@ -41,6 +38,7 @@ type SvgObject = {
   stroke?: Color;
   strokeWidth?: number;
   points?: Position[];
+  d?: Shape[];
 };
 
 export type { Tools, Position, Select, Palette, KeyBind, SvgObject, Size };
