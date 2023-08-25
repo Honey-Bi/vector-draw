@@ -25,14 +25,11 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
   // const xmlns = "http://www.w3.org/2000/svg";
 
   useEffect(() => {}, [position]);
-  useEffect(() => {
-    console.log(cPosition);
-  }, [cPosition]);
 
   // 마우스 클릭 이벤트
   const MouseOnHandler = (e: React.MouseEvent) => {
-    setMouseOn(true);
-    if (canvasRef.current) {
+    if (canvasRef.current && e.button === 0) {
+      setMouseOn(true);
       const position = getPosition(e.pageX, e.pageY);
       setCPosition(getPosition(e.pageX, e.pageY));
       const id = svgList.current.length;
@@ -54,7 +51,8 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
             break;
           }
           result = {
-            title: `line-${id}`,
+            id: `${tool}-${id}`,
+            title: tool,
             type: "line",
             stroke: palette.stroke,
             strokeWidth: 5,
@@ -68,7 +66,8 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
             break;
           }
           result = {
-            title: `rect-${id}`,
+            id: `${tool}-${id}`,
+            title: tool,
             type: "rect",
             fill: palette.fill,
             stroke: palette.stroke,
@@ -78,6 +77,18 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
           };
           break;
         case "circle":
+          if (palette.fill === null && palette.stroke === null) {
+            result = ErrorMsg["fillStrokeNull"];
+            break;
+          }
+          result = {
+            id: `ellipse-${id}`,
+            title: tool,
+            type: "ellipse",
+            fill: palette.fill,
+            stroke: palette.stroke,
+            strokeWidth: 5,
+          };
           break;
         case "shape":
           break;
@@ -153,7 +164,6 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
   const MouseUpHandler = (e: React.MouseEvent) => {
     setMouseOn(false);
     if (tool !== "select") {
-      console.log(svgList.current[svgList.current.length - 1]);
     }
   };
 
@@ -175,12 +185,13 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
     for (let index of svgList.current) {
       switch (index.type) {
         case "pencil":
+          result.push(<path key={index.id} id={index.id} />);
           break;
         case "line": // complete
           result.push(
             <line
-              key={index.title}
-              id={index.title}
+              key={index.id}
+              id={index.id}
               x1={index.position1!.x}
               y1={index.position1!.y}
               x2={index.position2!.x}
@@ -197,8 +208,8 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
         case "rect": // complete
           result.push(
             <rect
-              key={index.title}
-              id={index.title}
+              key={index.id}
+              id={index.id}
               x={index.position!.x}
               y={index.position!.y}
               width={index.size!.width}
@@ -275,6 +286,7 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
             ref={canvasRef}
           >
             {renderSvgObject()}
+            <path d="M10 10 h 80 v 80 h -80" fill="transparent" stroke="black" />
           </svg>
         </div>
       </div>
