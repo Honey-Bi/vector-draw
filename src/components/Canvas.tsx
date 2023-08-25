@@ -1,13 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Tools,
-  Position,
-  KeyBind,
-  Select,
-  Size,
-  SvgObject,
-  Palette,
-} from "../types";
+import { Tools, Position, KeyBind, Select, Size, SvgObject, Palette } from "../types";
 
 type Props = {
   tool: Tools;
@@ -19,33 +11,32 @@ type Props = {
   palette: Palette;
 };
 
-function Canvas({
-  tool,
-  setSelect,
-  keyBind,
-  shortcutTool,
-  canvasSize,
-  svgList,
-  palette,
-}: Props) {
 const ErrorMsg = {
   strokeNull: "선 색상이 선택되지 않았습니다..",
   fillStrokeNull: "선 또는 채우기 색상이 선택되지 않았습니다.",
 };
+
+function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, palette }: Props) {
   const canvasRef = useRef<SVGSVGElement>(null);
   const [isMouseOn, setMouseOn] = useState<boolean>(false);
   const [position, setPostion] = useState<Position>({ x: 0, y: 0 });
+  const [cPosition, setCPosition] = useState<Position>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState<number>(1);
   // const xmlns = "http://www.w3.org/2000/svg";
 
   useEffect(() => {}, [position]);
+  useEffect(() => {
+    console.log(cPosition);
+  }, [cPosition]);
 
   // 마우스 클릭 이벤트
   const MouseOnHandler = (e: React.MouseEvent) => {
     setMouseOn(true);
     if (canvasRef.current) {
       const position = getPosition(e.pageX, e.pageY);
+      setCPosition(getPosition(e.pageX, e.pageY));
       const id = svgList.current.length;
+      let result: SvgObject | string = "";
       switch (tool) {
         case "select":
           const target = e.target as Element;
@@ -56,18 +47,6 @@ const ErrorMsg = {
           }
           return;
         case "pencil":
-          const pencil: SvgObject = {
-            title: `line-${id}`,
-            type: "polyline",
-            stroke: {
-              r: palette.stroke!.r,
-              g: palette.stroke!.g,
-              b: palette.stroke!.b,
-            },
-            strokeWidth: 5,
-            points: [position],
-          };
-          svgList.current.push(pencil);
           break;
         case "line":
           if (palette.stroke === null) {
@@ -88,6 +67,15 @@ const ErrorMsg = {
             result = ErrorMsg["fillStrokeNull"];
             break;
           }
+          result = {
+            title: `rect-${id}`,
+            type: "rect",
+            fill: palette.fill,
+            stroke: palette.stroke,
+            strokeWidth: 5,
+            position: position,
+            size: { width: 0, height: 0 },
+          };
           break;
         case "circle":
           break;
@@ -116,18 +104,57 @@ const ErrorMsg = {
   const MouseMoveHandler = (e: React.MouseEvent) => {
     if (canvasRef.current && isMouseOn) {
       const position = getPosition(e.pageX, e.pageY);
+      let last = svgList.current[svgList.current.length - 1];
       switch (tool) {
+        case "pencil":
+          // svgList.current[svgList.current.length - 1].points?.push(position);
+          // setPostion(position);
+          break;
         case "line":
-          svgList.current[svgList.current.length - 1].position2 = position;
-          setPostion(position);
+          last.position2 = position;
+          break;
+        case "rect":
+          if (position.x > cPosition.x) {
+            // right
+            last.size!.width = position.x - cPosition.x;
+          } else if (position.x < cPosition.x) {
+            // left
+            last.position!.x = position.x;
+            last.size!.width = cPosition.x - position.x;
+          }
+          if (position.y > cPosition.y) {
+            // bottom
+            last.size!.height = position.y - cPosition.y;
+          } else {
+            // top
+            last.position!.y = position.y;
+            last.size!.height = cPosition.y - position.y;
+          }
+
+          break;
+        case "circle":
+          break;
+        case "shape":
+          break;
+        case "path":
+          break;
+        case "text":
+          break;
+        case "zoom":
+          break;
+        case "spoid":
           break;
       }
+      setPostion(position);
     }
   };
 
   //마우스 클릭 종료 이벤트
   const MouseUpHandler = (e: React.MouseEvent) => {
     setMouseOn(false);
+    if (tool !== "select") {
+      console.log(svgList.current[svgList.current.length - 1]);
+    }
   };
 
   // 줌인 함수
@@ -147,8 +174,7 @@ const ErrorMsg = {
     let result = [];
     for (let index of svgList.current) {
       switch (index.type) {
-        case "polyline":
-          <polyline key={index.title} id={index.title} />;
+        case "pencil":
           break;
         case "line":
           result.push(
@@ -169,6 +195,32 @@ const ErrorMsg = {
 
           break;
         case "rect":
+          result.push(
+            <rect
+              key={index.title}
+              id={index.title}
+              x={index.position!.x}
+              y={index.position!.y}
+              width={index.size!.width}
+              height={index.size!.height}
+              fill={
+                index.fill
+                  ? `rgba(${index.fill!.r}, 
+                  ${index.fill!.g}, 
+                  ${index.fill!.b})`
+                  : "none"
+              }
+              stroke={
+                index.stroke
+                  ? `rgba(${index.stroke!.r}, 
+                  ${index.stroke!.g}, 
+                  ${index.stroke!.b})`
+                  : "none"
+              }
+              strokeWidth={index.strokeWidth}
+            />
+          );
+          // console.log(index);
           break;
         case "Ellipse":
           break;
