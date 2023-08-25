@@ -5,23 +5,17 @@
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
+    <meta name="description" content="Web site created using create-react-app" />
     <title>React App</title>
   </head>
   <body>
     <script>
       document.addEventListener("keydown", function (event) {
-        if (
-          (event.key === "Ctrl") |
-          (event.key === "Shift") |
-          (event.key === "Alt")
-        ) {
+        if ((event.key === "Ctrl") | (event.key === "Shift") | (event.key === "Alt")) {
           event.preventDefault();
         }
       });
+      window.addEventListener("contextmenu", (e) => e.preventDefault());
     </script>
     <div id="root"></div>
   </body>
