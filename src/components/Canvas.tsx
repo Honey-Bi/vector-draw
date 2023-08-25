@@ -28,6 +28,10 @@ function Canvas({
   svgList,
   palette,
 }: Props) {
+const ErrorMsg = {
+  strokeNull: "선 색상이 선택되지 않았습니다..",
+  fillStrokeNull: "선 또는 채우기 색상이 선택되지 않았습니다.",
+};
   const canvasRef = useRef<SVGSVGElement>(null);
   const [isMouseOn, setMouseOn] = useState<boolean>(false);
   const [position, setPostion] = useState<Position>({ x: 0, y: 0 });
@@ -50,7 +54,7 @@ function Canvas({
           } else {
             setSelect(null);
           }
-          break;
+          return;
         case "pencil":
           const pencil: SvgObject = {
             title: `line-${id}`,
@@ -66,21 +70,24 @@ function Canvas({
           svgList.current.push(pencil);
           break;
         case "line":
-          const line: SvgObject = {
+          if (palette.stroke === null) {
+            result = ErrorMsg["strokeNull"];
+            break;
+          }
+          result = {
             title: `line-${id}`,
             type: "line",
-            stroke: {
-              r: palette.stroke!.r,
-              g: palette.stroke!.g,
-              b: palette.stroke!.b,
-            },
+            stroke: palette.stroke,
             strokeWidth: 5,
             position1: position,
             position2: position,
           };
-          svgList.current.push(line);
           break;
         case "rect":
+          if (palette.stroke === null && palette.fill === null) {
+            result = ErrorMsg["fillStrokeNull"];
+            break;
+          }
           break;
         case "circle":
           break;
@@ -95,6 +102,12 @@ function Canvas({
           break;
         case "spoid":
           break;
+      }
+      if (typeof result === "string") {
+        setMouseOn(false);
+        alert(result);
+      } else {
+        svgList.current.push(result);
       }
     }
   };
@@ -210,9 +223,6 @@ function Canvas({
             height={canvasSize.height}
             ref={canvasRef}
           >
-            <svg>
-              <rect width="480" height="240" fill="#3d87fb" />
-            </svg>
             {renderSvgObject()}
           </svg>
         </div>
