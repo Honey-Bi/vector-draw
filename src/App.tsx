@@ -10,8 +10,8 @@ import "./index.css";
 export default function App() {
   const [tool, setTool] = useState<Tools>("select");
   const [palette, setPalette] = useState<Palette>({
-    fill: { r: 255, g: 255, b: 255 },
     stroke: { r: 0, g: 0, b: 0 },
+    fill: null,
   });
   const [bindKey, setBindKey] = useState<KeyBind>({
     ctrl: false,
@@ -91,7 +91,7 @@ export default function App() {
     }
   }
 
-  // 특수키 뗏을때 설정
+  // 특수키 뗏을때 상태 변경
   function keyUp(e: React.KeyboardEvent) {
     if (e.key === "Control") setBindKey((prev) => ({ ...prev, ctrl: false }));
     if (e.key === "Shift") setBindKey((prev) => ({ ...prev, shift: false }));
@@ -117,15 +117,13 @@ export default function App() {
           shortcutTool={shortcutTool}
           canvasSize={canvasSize}
           svgList={svgList}
-          // setSvgList={setSvgList}
         />
         <Panel
           tool={tool}
           select={select}
           canvasSize={canvasSize}
           setCanvasSize={setCanvasSize}
-          // svgList={SvgList}
-          // setSvgList={setSvgList}
+          svgList={svgList}
         />
       </div>
     </div>
