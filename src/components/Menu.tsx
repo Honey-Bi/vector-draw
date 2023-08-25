@@ -1,10 +1,4 @@
-import {
-  BaseSyntheticEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { BaseSyntheticEvent, useCallback, useEffect, useRef, useState } from "react";
 
 export default function Menu() {
   const menuRef = useRef<HTMLUListElement>(null); // 메뉴창 ref
