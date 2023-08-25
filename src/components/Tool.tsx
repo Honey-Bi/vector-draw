@@ -15,6 +15,8 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   const [FS, setFS] = useState<boolean>(true);
   // true 면 fill, false면 stroke
 
+  const [open, setOpen] = useState<boolean>(false);
+
   function colorFill() {
     if (!FS) return setFS(true);
     openPalette();
@@ -34,7 +36,7 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   }
 
   function openPalette() {
-    console.log("open");
+    setOpen(true);
   }
   return (
     <>
@@ -160,7 +162,36 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           <div className="color-default" onClick={colorDefault}></div>
         </div>
       </div>
-      <div className="color-picker"></div>
+      <div className={`color-picker ${open ? "open" : ""}`}>
+        <div className="sb"></div>
+        <div className="c"></div>
+        <div className="info">
+          <fieldset>
+            <legend>COLOR</legend>
+            <div className="color"></div>
+          </fieldset>
+          <fieldset>
+            <legend>HEX</legend>
+            <input className="" />
+          </fieldset>
+          <fieldset>
+            <legend>RGB</legend>
+            <input className="" />
+          </fieldset>
+          <fieldset>
+            <legend>CMYK</legend>
+            <input className="" />
+          </fieldset>
+          <fieldset>
+            <legend>HSV</legend>
+            <input className="" />
+          </fieldset>
+          <fieldset>
+            <legend>HSL</legend>
+            <input className="" />
+          </fieldset>
+        </div>
+      </div>
     </>
   );
 }
