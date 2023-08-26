@@ -16,6 +16,7 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   // true 면 fill, false면 stroke
 
   const [open, setOpen] = useState<boolean>(false);
+  // const [color, setColor] = useState<ColorPicker>({})
 
   function colorFill() {
     if (!FS) return setFS(true);
@@ -176,14 +177,6 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           </fieldset>
           <fieldset>
             <legend>RGB</legend>
-            <input className="" />
-          </fieldset>
-          <fieldset>
-            <legend>CMYK</legend>
-            <input className="" />
-          </fieldset>
-          <fieldset>
-            <legend>HSV</legend>
             <input className="" />
           </fieldset>
           <fieldset>
