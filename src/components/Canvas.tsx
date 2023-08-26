@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Tools, Position, KeyBind, Select, Size, SvgObject, Palette } from "../types";
+import {
+  Tools,
+  Position,
+  KeyBind,
+  Select,
+  Size,
+  SvgObject,
+  Palette,
+} from "../types";
 
 type Props = {
   tool: Tools;
@@ -16,7 +24,15 @@ const ErrorMsg = {
   fillStrokeNull: "선 또는 채우기 색상이 선택되지 않았습니다.",
 };
 
-function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, palette }: Props) {
+function Canvas({
+  tool,
+  setSelect,
+  keyBind,
+  shortcutTool,
+  canvasSize,
+  svgList,
+  palette,
+}: Props) {
   const canvasRef = useRef<SVGSVGElement>(null);
   const [isMouseOn, setMouseOn] = useState<boolean>(false);
   const [position, setPostion] = useState<Position>({ x: 0, y: 0 });
@@ -164,6 +180,7 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
   const MouseUpHandler = (e: React.MouseEvent) => {
     setMouseOn(false);
     if (tool !== "select") {
+      let last = svgList.current[svgList.current.length - 1];
     }
   };
 
@@ -286,7 +303,6 @@ function Canvas({ tool, setSelect, keyBind, shortcutTool, canvasSize, svgList, p
             ref={canvasRef}
           >
             {renderSvgObject()}
-            <path d="M10 10 h 80 v 80 h -80" fill="transparent" stroke="black" />
           </svg>
         </div>
       </div>
