@@ -21,7 +21,14 @@ type Palette = { fill: Color; stroke: Color };
 
 type KeyBind = { ctrl: boolean; shift: boolean; alt: boolean };
 
-type SvgType = "pencil" | "line" | "rect" | "ellipse" | "polygon" | "path" | "text";
+type SvgType =
+  | "pencil"
+  | "line"
+  | "rect"
+  | "ellipse"
+  | "polygon"
+  | "path"
+  | "text";
 
 type Command = "d" | "";
 type Shape = { command: Command; x?: number; y?: number };
