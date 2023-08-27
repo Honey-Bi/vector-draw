@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Palette, Tools } from "../types";
+import React, { useEffect, useRef, useState } from "react";
+import { Palette, Position, Tools } from "../types";
 
 type Props = {
   tool: Tools;
@@ -16,28 +16,113 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   // true 면 fill, false면 stroke
 
   const [open, setOpen] = useState<boolean>(false);
+
+  const pRef = useRef<HTMLDivElement>(null);
+  const [sbDown, setSBDown] = useState<boolean>(false);
+  const [cDown, setCDown] = useState<boolean>(false);
+  const [cTop, setCTop] = useState<number>(0);
+  const [sbPosition, setSBPosition] = useState<Position>({ x: 0, y: 0 });
+
   // const [color, setColor] = useState<ColorPicker>({})
 
+  // 채우기 색상 변경
   function colorFill() {
     if (!FS) return setFS(true);
-    openPalette();
+    setOpen(true);
   }
+
+  // 선 색상 변경
   function colorStroke() {
     if (FS) return setFS(false);
-    openPalette();
+    setOpen(true);
   }
+
+  // 팔레트 기본 색상 기능
   function colorDefault() {
     setPalette({
       fill: { r: 255, g: 255, b: 255 },
       stroke: null,
     });
   }
+
+  // 팔레트 스왑 기능
   function toggleFS() {
     setFS((prev) => !prev);
   }
 
-  function openPalette() {
-    setOpen(true);
+  // 팔레트 닫기 기능
+  useEffect(() => {
+    // 외부영역 클릭 이벤트 감지후 팔레트 닫음
+    const handleClick = (e: MouseEvent) => {
+      if (pRef.current && !pRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("mousedown", handleClick);
+    return () => window.removeEventListener("mousedown", handleClick);
+  }, [pRef]);
+
+  // 팔레트 색조정 마우스 이동 감지
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (sbDown) {
+        setSB(e.pageX, e.pageY);
+      }
+      if (cDown) {
+        setC(e.pageY);
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [sbDown, cDown]);
+
+  // 팔레트 열고 마우스 업 감지
+  useEffect(() => {
+    const handleMouseUp = (e: MouseEvent) => {
+      if (open) {
+        setCDown(false);
+        setSBDown(false);
+      }
+    };
+
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => window.removeEventListener("mouseup", handleMouseUp);
+  }, [open]);
+
+  // 색조 및 채도 클릭
+  function sbMouseDown(e: React.MouseEvent) {
+    setSBDown(true);
+    setSB(e.pageX, e.pageY);
+  }
+
+  // 색상 변경 클릭
+  function cMouseDown(e: React.MouseEvent) {
+    setCDown(true);
+    setC(e.pageY);
+  }
+
+  // 색조 및 채도 변경
+  function setSB(x: number, y: number) {
+    const sb = document.getElementsByClassName("sb")[0].getBoundingClientRect();
+    const position: Position = {
+      x: x - sb.x,
+      y: y - sb.y,
+    };
+    if (position.x >= 0 && position.x <= 256)
+      setSBPosition((prev) => {
+        return { ...prev, x: position.x };
+      });
+    if (position.y >= 0 && position.y <= 256)
+      setSBPosition((prev) => {
+        return { ...prev, y: position.y };
+      });
+  }
+
+  // 색상 변경
+  function setC(y: number) {
+    const c = document.getElementsByClassName("c")[0].getBoundingClientRect();
+    const top = y - c.y;
+    if (top >= 0 && top <= 256) setCTop(top);
   }
   return (
     <>
@@ -163,9 +248,16 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           <div className="color-default" onClick={colorDefault}></div>
         </div>
       </div>
-      <div className={`color-picker ${open ? "open" : ""}`}>
-        <div className="sb"></div>
-        <div className="c"></div>
+      <div className={`color-picker ${open ? "open" : ""}`} ref={pRef}>
+        <div className="sb draggNone" onMouseDown={sbMouseDown}>
+          <div
+            className="arrow"
+            style={{ top: sbPosition.y - 8, left: sbPosition.x - 8 }}
+          ></div>
+        </div>
+        <div className="c draggNone" onMouseDown={cMouseDown}>
+          <div className="arrow" style={{ top: cTop }}></div>
+        </div>
         <div className="info">
           <fieldset>
             <legend>COLOR</legend>
