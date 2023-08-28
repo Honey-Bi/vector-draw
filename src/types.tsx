@@ -48,4 +48,13 @@ type SvgObject = {
   d?: Shape[];
 };
 
-export type { Tools, Position, Select, Palette, KeyBind, SvgObject, Size };
+export type {
+  Tools,
+  Position,
+  Select,
+  Palette,
+  Color,
+  KeyBind,
+  SvgObject,
+  Size,
+};
