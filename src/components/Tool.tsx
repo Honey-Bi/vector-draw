@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Palette, Position, Tools } from "../types";
+import { Color, Palette, Position, Tools } from "../types";
 
 type Props = {
   tool: Tools;
@@ -7,6 +7,12 @@ type Props = {
   palette: Palette;
   setPalette: (color: Palette) => void;
   shortcutTool: (e: React.KeyboardEvent) => void;
+};
+
+type cpColor = {
+  HEX: string | "null";
+  RGB: string | "null";
+  HSL: string | "null";
 };
 
 function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
@@ -17,23 +23,24 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
 
   const [open, setOpen] = useState<boolean>(false);
 
-  const pRef = useRef<HTMLDivElement>(null);
+  const cpRef = useRef<HTMLDivElement>(null);
   const [sbDown, setSBDown] = useState<boolean>(false);
   const [cDown, setCDown] = useState<boolean>(false);
   const [cTop, setCTop] = useState<number>(0);
   const [sbPosition, setSBPosition] = useState<Position>({ x: 0, y: 0 });
-
-  // const [color, setColor] = useState<ColorPicker>({})
+  const [cpColor, setCPColor] = useState<cpColor>(setCP(palette.fill));
 
   // 채우기 색상 변경
   function colorFill() {
     if (!FS) return setFS(true);
+    setCPColor(setCP(palette.fill));
     setOpen(true);
   }
 
   // 선 색상 변경
   function colorStroke() {
     if (FS) return setFS(false);
+    setCPColor(setCP(palette.stroke));
     setOpen(true);
   }
 
@@ -54,13 +61,13 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   useEffect(() => {
     // 외부영역 클릭 이벤트 감지후 팔레트 닫음
     const handleClick = (e: MouseEvent) => {
-      if (pRef.current && !pRef.current.contains(e.target as Node)) {
+      if (cpRef.current && !cpRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
     window.addEventListener("mousedown", handleClick);
     return () => window.removeEventListener("mousedown", handleClick);
-  }, [pRef]);
+  }, [cpRef]);
 
   // 팔레트 색조정 마우스 이동 감지
   useEffect(() => {
@@ -124,6 +131,117 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
     const top = y - c.y;
     if (top >= 0 && top <= 256) setCTop(top);
   }
+
+  // 컬러피커 정보 입력
+  function setCP(color: Color): cpColor {
+    if (color === null) return { HEX: "null", RGB: "null", HSL: "null" };
+    let hexList = [];
+    let rgbList = [];
+    for (let i of Object.values(color)) {
+      hexList.push(Math.round(i).toString(16));
+      rgbList.push(Math.round(i));
+    }
+    const HEX: string = hexList.join("");
+    const RGB: string = rgbList.join(",");
+    let r = (color.r /= 255);
+    let g = (color.g /= 255);
+    let b = (color.b /= 255);
+    const l = Math.max(r, g, b);
+    const s = l - Math.min(r, g, b);
+    const h = s ? (l === r ? (g - b) / s : l === g ? 2 + (b - r) / s : 4 + (r - g) / s) : 0;
+    const HSL = [
+      60 * h < 0 ? 60 * h + 360 : 60 * h,
+      100 * (s ? (l <= 0.5 ? s / (2 * l - s) : s / (2 - (2 * l - s))) : 0),
+      (100 * (2 * l - s)) / 2,
+    ].join(",");
+    return { HEX: HEX, RGB: RGB, HSL: HSL };
+  }
+
+  // 컬러피커 입력값 변경
+  function cbChange(e: React.ChangeEvent<HTMLInputElement>, type: "HEX" | "RGB" | "HSL") {
+    switch (type) {
+      case "HEX":
+        const length = e.target.value.length;
+        let color: Color = null;
+        // EX : #000
+        if (length === 3) {
+          let rgb: number[] = [];
+          for (let i of e.target.value) {
+            if (isNaN(parseInt(i, 16))) break; // 16진수 변환 가능확인
+            rgb.push(parseInt(i + i, 16));
+          }
+          color = { r: rgb[0], g: rgb[1], b: rgb[2] };
+        }
+
+        // EX : #000000
+        if (length === 6) {
+          let rgb: number[] = [];
+          for (let i = 0; i < length; i++) {
+            if (i % 2 === 0) {
+              let index = e.target.value.substring(i, i + 2); // 두글자씩 자르기
+              if (isNaN(parseInt(index, 16))) break; // 16진수 변환 가능확인
+              rgb.push(parseInt(index, 16));
+            }
+          }
+          color = { r: rgb[0], g: rgb[1], b: rgb[2] };
+        }
+        if (color) {
+          const cp = setCP(color);
+          setCPColor({ ...cp, HEX: e.target.value });
+          return;
+        }
+        break;
+      case "RGB":
+        const rgb = e.target.value.split(",");
+        // r,g,b 하나라도 없다면
+        if (rgb.length !== 3) break;
+
+        // r,g,b 숫자값이 아니라면
+        let rgbError = false;
+        for (let i of rgb) {
+          if (i.trim() === "" || isNaN(Number(i))) {
+            rgbError = true;
+            break;
+          }
+        }
+        if (rgbError) break;
+        setCPColor(setCP({ r: Number(rgb[0]), g: Number(rgb[1]), b: Number(rgb[2]) }));
+        return;
+      case "HSL":
+        const hsl = e.target.value.split(",");
+        // h,s,l 하나라도 없다면
+        if (hsl.length !== 3) break;
+
+        // h,s,l 숫자값이 아니라면
+        let hslError = false;
+        for (let i of hsl) {
+          if (i.trim() === "" || isNaN(Number(i))) {
+            hslError = true;
+            break;
+          }
+        }
+        if (hslError) break;
+
+        let h = parseInt(hsl[0]);
+        let s = parseInt(hsl[1]) / 100;
+        let l = parseInt(hsl[2]) / 100;
+        const k = (n: number) => (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+        console.log({
+          r: Math.round(255 * f(0)),
+          g: Math.round(255 * f(8)),
+          b: Math.round(255 * f(4)),
+        });
+        setCPColor(setCP({ r: 255 * f(0), g: 255 * f(8), b: 255 * f(4) }));
+        return;
+    }
+
+    setCPColor((prev) => {
+      return { ...prev, [type]: e.target.value };
+    });
+  }
+
   return (
     <>
       <div className="tool" tabIndex={0} onKeyDown={shortcutTool}>
@@ -248,32 +366,54 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           <div className="color-default" onClick={colorDefault}></div>
         </div>
       </div>
-      <div className={`color-picker ${open ? "open" : ""}`} ref={pRef}>
+      <div className={`color-picker ${open ? "open" : ""}`} ref={cpRef}>
         <div className="sb draggNone" onMouseDown={sbMouseDown}>
-          <div
-            className="arrow"
-            style={{ top: sbPosition.y - 8, left: sbPosition.x - 8 }}
-          ></div>
+          <div className="arrow" style={{ top: sbPosition.y - 8, left: sbPosition.x - 8 }}></div>
         </div>
         <div className="c draggNone" onMouseDown={cMouseDown}>
           <div className="arrow" style={{ top: cTop }}></div>
         </div>
         <div className="info">
           <fieldset>
-            <legend>COLOR</legend>
-            <div className="color"></div>
+            <legend className="draggNone">COLOR</legend>
+            <div
+              className={`color ${cpColor.HEX === null ? "null" : ""}`}
+              style={{ backgroundColor: `rgb(${cpColor.RGB})` }}
+            />
           </fieldset>
           <fieldset>
-            <legend>HEX</legend>
-            <input className="" />
+            <legend className="draggNone">HEX</legend>
+            <input
+              className=""
+              id="HEX"
+              value={cpColor.HEX !== null ? cpColor.HEX : "null"}
+              maxLength={6}
+              autoComplete="off"
+              placeholder="FFFFFF"
+              onChange={(e) => cbChange(e, "HEX")}
+            />
           </fieldset>
           <fieldset>
-            <legend>RGB</legend>
-            <input className="" />
+            <legend className="draggNone">RGB</legend>
+            <input
+              className=""
+              id="RGB"
+              value={cpColor.RGB !== null ? cpColor.RGB : "null"}
+              autoComplete="off"
+              placeholder="255, 255, 255"
+              onChange={(e) => cbChange(e, "RGB")}
+            />
           </fieldset>
           <fieldset>
-            <legend>HSL</legend>
-            <input className="" />
+            <legend className="draggNone">HSL</legend>
+            <input
+              className=""
+              id="HSL"
+              value={cpColor.HSL !== null ? cpColor.HSL : "null"}
+              autoComplete="off"
+              placeholder="0, 0, 100"
+              onChange={(e) => cbChange(e, "HSL")}
+            />
           </fieldset>
         </div>
       </div>
