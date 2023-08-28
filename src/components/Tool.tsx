@@ -28,19 +28,19 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   const [cDown, setCDown] = useState<boolean>(false);
   const [cTop, setCTop] = useState<number>(0);
   const [sbPosition, setSBPosition] = useState<Position>({ x: 0, y: 0 });
-  const [cpColor, setCPColor] = useState<cpColor>(setCP(palette.fill));
+  const [cpColor, setCPColor] = useState<cpColor>(setCPtoRGB(palette.fill));
 
   // 채우기 색상 변경
   function colorFill() {
     if (!FS) return setFS(true);
-    setCPColor(setCP(palette.fill));
+    setCPColor(setCPtoRGB(palette.fill));
     setOpen(true);
   }
 
   // 선 색상 변경
   function colorStroke() {
     if (FS) return setFS(false);
-    setCPColor(setCP(palette.stroke));
+    setCPColor(setCPtoRGB(palette.stroke));
     setOpen(true);
   }
 
@@ -129,31 +129,38 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   function setC(y: number) {
     const c = document.getElementsByClassName("c")[0].getBoundingClientRect();
     const top = y - c.y;
-    if (top >= 0 && top <= 256) setCTop(top);
+    if (top > 256) setCTop(256);
+    if (top < 0) setCTop(0);
+
+    if (top >= 0 && top <= 256) {
+      setCTop(top);
+      const input_hsl = document.getElementById("HSL") as HTMLInputElement;
+      let hsl_list = input_hsl.value.split(",");
+      hsl_list[0] = Math.round((top / 256) * 360).toString();
+      const cp = setCPtoHSL({
+        h: Number(hsl_list[0]),
+        s: Number(hsl_list[1]),
+        l: Number(hsl_list[2]),
+      });
+      setCPColor(cp);
+    }
   }
 
-  // 컬러피커 정보 입력
-  function setCP(color: Color): cpColor {
+  // 컬러피커 rgb로 정보 입력
+  function setCPtoRGB(color: Color): cpColor {
     if (color === null) return { HEX: "null", RGB: "null", HSL: "null" };
-    let hexList = [];
-    let rgbList = [];
-    for (let i of Object.values(color)) {
-      hexList.push(Math.round(i).toString(16));
-      rgbList.push(Math.round(i));
-    }
-    const HEX: string = hexList.join("");
-    const RGB: string = rgbList.join(",");
-    let r = (color.r /= 255);
-    let g = (color.g /= 255);
-    let b = (color.b /= 255);
-    const l = Math.max(r, g, b);
-    const s = l - Math.min(r, g, b);
-    const h = s ? (l === r ? (g - b) / s : l === g ? 2 + (b - r) / s : 4 + (r - g) / s) : 0;
-    const HSL = [
-      60 * h < 0 ? 60 * h + 360 : 60 * h,
-      100 * (s ? (l <= 0.5 ? s / (2 * l - s) : s / (2 - (2 * l - s))) : 0),
-      (100 * (2 * l - s)) / 2,
-    ].join(",");
+    const RGB = color.r + "," + color.g + "," + color.b;
+    const HEX = RGBtoHex([color.r, color.g, color.b]);
+    const HSL = RGBtoHSL(color.r, color.g, color.b).join(",");
+    return { HEX: HEX, RGB: RGB, HSL: HSL };
+  }
+
+  // 컬러피커 hsl로 정보 입력
+  function setCPtoHSL(color: { h: number; s: number; l: number } | null): cpColor {
+    if (color === null) return { HEX: "null", RGB: "null", HSL: "null" };
+    const HSL = color.h + "," + color.s + "," + color.l;
+    const RGB = HSLtoRGB(color.h, color.s, color.l).join(",");
+    const HEX = RGBtoHex(HSLtoRGB(color.h, color.s, color.l));
     return { HEX: HEX, RGB: RGB, HSL: HSL };
   }
 
@@ -186,7 +193,7 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           color = { r: rgb[0], g: rgb[1], b: rgb[2] };
         }
         if (color) {
-          const cp = setCP(color);
+          const cp = setCPtoRGB(color);
           setCPColor({ ...cp, HEX: e.target.value });
           return;
         }
@@ -205,14 +212,15 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           }
         }
         if (rgbError) break;
-        setCPColor(setCP({ r: Number(rgb[0]), g: Number(rgb[1]), b: Number(rgb[2]) }));
+        const rgb_cp = setCPtoRGB({ r: Number(rgb[0]), g: Number(rgb[1]), b: Number(rgb[2]) });
+        setCPColor(rgb_cp);
         return;
       case "HSL":
         const hsl = e.target.value.split(",");
         // h,s,l 하나라도 없다면
         if (hsl.length !== 3) break;
 
-        // h,s,l 숫자값이 아니라면
+        // h,s,l 숫자값이 아니거나
         let hslError = false;
         for (let i of hsl) {
           if (i.trim() === "" || isNaN(Number(i))) {
@@ -220,26 +228,56 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
             break;
           }
         }
+        // hsl 값에 못들어가는 값인지 확인
+        if (Number(hsl[0]) > 360 || Number(hsl[0]) < 0) break;
+        if (Number(hsl[1]) > 100 || Number(hsl[1]) < 0) break;
+        if (Number(hsl[2]) > 100 || Number(hsl[2]) < 0) break;
         if (hslError) break;
 
-        let h = parseInt(hsl[0]);
-        let s = parseInt(hsl[1]) / 100;
-        let l = parseInt(hsl[2]) / 100;
-        const k = (n: number) => (n + h / 30) % 12;
-        const a = s * Math.min(l, 1 - l);
-        const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-        console.log({
-          r: Math.round(255 * f(0)),
-          g: Math.round(255 * f(8)),
-          b: Math.round(255 * f(4)),
-        });
-        setCPColor(setCP({ r: 255 * f(0), g: 255 * f(8), b: 255 * f(4) }));
+        const hsl_cp = setCPtoHSL({ h: Number(hsl[0]), s: Number(hsl[1]), l: Number(hsl[2]) });
+        setCPColor(hsl_cp);
         return;
     }
 
     setCPColor((prev) => {
       return { ...prev, [type]: e.target.value };
     });
+  }
+
+  // HSL 값을 RGB로
+  function HSLtoRGB(h: number, s: number, l: number): number[] {
+    s /= 100;
+    l /= 100;
+    const k = (n: number) => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+
+    return [Math.round(255 * f(0)), Math.round(255 * f(8)), Math.round(255 * f(4))];
+  }
+
+  // RGB 값을 HSL로
+  function RGBtoHSL(r: number, g: number, b: number): number[] {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    const l = Math.max(r, g, b);
+    const s = l - Math.min(r, g, b);
+    const h = s ? (l === r ? (g - b) / s : l === g ? 2 + (b - r) / s : 4 + (r - g) / s) : 0;
+    return [
+      Math.round(60 * h < 0 ? 60 * h + 360 : 60 * h),
+      Math.round(100 * (s ? (l <= 0.5 ? s / (2 * l - s) : s / (2 - (2 * l - s))) : 0)),
+      Math.round((100 * (2 * l - s)) / 2),
+    ];
+  }
+
+  function RGBtoHex(rgbArray: number[]): string {
+    let hexList = [];
+    for (let i of rgbArray) {
+      let index = Math.round(i);
+      if (Math.round(i) <= 16) hexList.push("0" + index.toString(16));
+      else hexList.push(index.toString(16));
+    }
+    return hexList.join("");
   }
 
   return (
@@ -384,7 +422,6 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           <fieldset>
             <legend className="draggNone">HEX</legend>
             <input
-              className=""
               id="HEX"
               value={cpColor.HEX !== null ? cpColor.HEX : "null"}
               maxLength={6}
@@ -396,7 +433,6 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           <fieldset>
             <legend className="draggNone">RGB</legend>
             <input
-              className=""
               id="RGB"
               value={cpColor.RGB !== null ? cpColor.RGB : "null"}
               autoComplete="off"
@@ -407,7 +443,6 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           <fieldset>
             <legend className="draggNone">HSL</legend>
             <input
-              className=""
               id="HSL"
               value={cpColor.HSL !== null ? cpColor.HSL : "null"}
               autoComplete="off"
