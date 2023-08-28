@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Color, Palette, Position, Tools } from "../types";
 
 type Props = {
@@ -57,45 +57,6 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
     setFS((prev) => !prev);
   }
 
-  // 팔레트 닫기 기능
-  useEffect(() => {
-    // 외부영역 클릭 이벤트 감지후 팔레트 닫음
-    const handleClick = (e: MouseEvent) => {
-      if (cpRef.current && !cpRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    window.addEventListener("mousedown", handleClick);
-    return () => window.removeEventListener("mousedown", handleClick);
-  }, [cpRef]);
-
-  // 팔레트 색조정 마우스 이동 감지
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (sbDown) {
-        setSB(e.pageX, e.pageY);
-      }
-      if (cDown) {
-        setC(e.pageY);
-      }
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [sbDown, cDown]);
-
-  // 팔레트 열고 마우스 업 감지
-  useEffect(() => {
-    const handleMouseUp = (e: MouseEvent) => {
-      if (open) {
-        setCDown(false);
-        setSBDown(false);
-      }
-    };
-
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => window.removeEventListener("mouseup", handleMouseUp);
-  }, [open]);
-
   // 색조 및 채도 클릭
   function sbMouseDown(e: React.MouseEvent) {
     setSBDown(true);
@@ -108,44 +69,6 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
     setC(e.pageY);
   }
 
-  // 색조 및 채도 변경
-  function setSB(x: number, y: number) {
-    const sb = document.getElementsByClassName("sb")[0].getBoundingClientRect();
-    const position: Position = {
-      x: x - sb.x,
-      y: y - sb.y,
-    };
-    if (position.x >= 0 && position.x <= 256)
-      setSBPosition((prev) => {
-        return { ...prev, x: position.x };
-      });
-    if (position.y >= 0 && position.y <= 256)
-      setSBPosition((prev) => {
-        return { ...prev, y: position.y };
-      });
-  }
-
-  // 색상 변경
-  function setC(y: number) {
-    const c = document.getElementsByClassName("c")[0].getBoundingClientRect();
-    const top = y - c.y;
-    if (top > 256) setCTop(256);
-    if (top < 0) setCTop(0);
-
-    if (top >= 0 && top <= 256) {
-      setCTop(top);
-      const input_hsl = document.getElementById("HSL") as HTMLInputElement;
-      let hsl_list = input_hsl.value.split(",");
-      hsl_list[0] = Math.round((top / 256) * 360).toString();
-      const cp = setCPtoHSL({
-        h: Number(hsl_list[0]),
-        s: Number(hsl_list[1]),
-        l: Number(hsl_list[2]),
-      });
-      setCPColor(cp);
-    }
-  }
-
   // 컬러피커 rgb로 정보 입력
   function setCPtoRGB(color: Color): cpColor {
     if (color === null) return { HEX: "null", RGB: "null", HSL: "null" };
@@ -156,17 +79,86 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   }
 
   // 컬러피커 hsl로 정보 입력
-  function setCPtoHSL(color: { h: number; s: number; l: number } | null): cpColor {
+  const setCPtoHSL = useCallback((color: { h: number; s: number; l: number } | null): cpColor => {
     if (color === null) return { HEX: "null", RGB: "null", HSL: "null" };
     const HSL = color.h + "," + color.s + "," + color.l;
     const RGB = HSLtoRGB(color.h, color.s, color.l).join(",");
     const HEX = RGBtoHex(HSLtoRGB(color.h, color.s, color.l));
     return { HEX: HEX, RGB: RGB, HSL: HSL };
-  }
+  }, []);
+
+  // 색조 및 채도 변경
+  const setSB = useCallback(
+    (x: number, y: number) => {
+      const sb = document.getElementsByClassName("sb")[0].getBoundingClientRect();
+      let position: Position = {
+        x: x - sb.x,
+        y: y - sb.y,
+      };
+      if (position.x > 256) {
+        setSBPosition((prev) => {
+          return { ...prev, x: 256 };
+        });
+        position.x = 256;
+      }
+      if (position.x < 0) {
+        setSBPosition((prev) => {
+          return { ...prev, x: 0 };
+        });
+        position.x = 0;
+      }
+      if (position.y > 256) {
+        setSBPosition((prev) => {
+          return { ...prev, y: 256 };
+        });
+        position.y = 256;
+      }
+      if (position.y < 0) {
+        setSBPosition((prev) => {
+          return { ...prev, y: 0 };
+        });
+        position.y = 0;
+      }
+
+      setSBPosition({ x: position.x, y: position.y });
+
+      const h = Math.round((cTop / 256) * 360);
+      const s = Math.round((position.x / 256) * 100);
+      const v = 100 - Math.round((position.y / 256) * 100);
+      const hsl = HSVtoHSL(h, s, v);
+      const cp = setCPtoHSL({ h: hsl[0], s: hsl[1], l: hsl[2] });
+      setCPColor(cp);
+    },
+    [cTop, setCPtoHSL]
+  );
+
+  // 색상 변경
+  const setC = useCallback(
+    (y: number) => {
+      const c = document.getElementsByClassName("c")[0].getBoundingClientRect();
+      let top = y - c.y;
+      if (top > 256) top = 256;
+
+      if (top < 0) top = 0;
+
+      setCTop(top);
+      const input_hsl = document.getElementById("HSL") as HTMLInputElement;
+      let hsl_list = input_hsl.value.split(",");
+      hsl_list[0] = Math.round((top / 256) * 360).toString();
+      const cp = setCPtoHSL({
+        h: Number(hsl_list[0]),
+        s: Number(hsl_list[1]),
+        l: Number(hsl_list[2]),
+      });
+      setCPColor(cp);
+    },
+    [setCPtoHSL]
+  );
 
   // 컬러피커 입력값 변경
   function cbChange(e: React.ChangeEvent<HTMLInputElement>, type: "HEX" | "RGB" | "HSL") {
     switch (type) {
+      // HEX 값 변경
       case "HEX":
         const length = e.target.value.length;
         let color: Color = null;
@@ -198,6 +190,8 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           return;
         }
         break;
+
+      // RGB 값 변경
       case "RGB":
         const rgb = e.target.value.split(",");
         // r,g,b 하나라도 없다면
@@ -215,6 +209,8 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
         const rgb_cp = setCPtoRGB({ r: Number(rgb[0]), g: Number(rgb[1]), b: Number(rgb[2]) });
         setCPColor(rgb_cp);
         return;
+
+      // HSL 값 변경
       case "HSL":
         const hsl = e.target.value.split(",");
         // h,s,l 하나라도 없다면
@@ -270,6 +266,7 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
     ];
   }
 
+  // RGB 값을 HEX로
   function RGBtoHex(rgbArray: number[]): string {
     let hexList = [];
     for (let i of rgbArray) {
@@ -279,6 +276,72 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
     }
     return hexList.join("");
   }
+
+  // HSV 값을 HSL로
+  function HSVtoHSL(hsvH: number, hsvS: number, hsvV: number): number[] {
+    const hslL = ((200 - hsvS) * hsvV) / 100;
+    const [hslS, hslV] = [
+      hslL === 0 || hslL === 200
+        ? 0
+        : ((hsvS * hsvV) / 100 / (hslL <= 100 ? hslL : 200 - hslL)) * 100,
+      (hslL * 5) / 10,
+    ];
+    return [hsvH, Math.round(hslS), Math.round(hslV)];
+  }
+
+  // HSL 값을 HSV 로
+  function HSLtoHSV(hslH: number, hslS: number, hslL: number): number[] {
+    const hsv1 = (hslS * (hslL < 50 ? hslL : 100 - hslL)) / 100;
+    const hsvS = hsv1 === 0 ? 0 : ((2 * hsv1) / (hslL + hsv1)) * 100;
+    const hsvV = hslL + hsv1;
+    return [hslH, Math.round(hsvS), Math.round(hsvV)];
+  }
+
+  // 팔레트 닫기 기능
+  useEffect(() => {
+    // 외부영역 클릭 이벤트 감지후 팔레트 닫음
+    const handleClick = (e: MouseEvent) => {
+      if (cpRef.current && !cpRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("mousedown", handleClick);
+    return () => window.removeEventListener("mousedown", handleClick);
+  }, [cpRef]);
+
+  // 팔레트 색조정 마우스 이동 감지
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (sbDown) {
+        setSB(e.pageX, e.pageY);
+      }
+      if (cDown) {
+        setC(e.pageY);
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [sbDown, cDown, setSB, setC]);
+
+  // 팔레트 열고 마우스 업 감지
+  useEffect(() => {
+    const handleMouseUp = (e: MouseEvent) => {
+      if (open) {
+        setCDown(false);
+        setSBDown(false);
+      }
+    };
+
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => window.removeEventListener("mouseup", handleMouseUp);
+  }, [open]);
+
+  useEffect(() => {
+    const HSL_list = cpColor.HSL.split(",");
+    const HSV = HSLtoHSV(Number(HSL_list[0]), Number(HSL_list[1]), Number(HSL_list[2]));
+    setCTop((HSV[0] * 256) / 360);
+    setSBPosition({ x: (HSV[1] * 256) / 100, y: 256 - (HSV[2] * 256) / 100 });
+  }, [cpColor]);
 
   return (
     <>
@@ -406,7 +469,23 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
       </div>
       <div className={`color-picker ${open ? "open" : ""}`} ref={cpRef}>
         <div className="sb draggNone" onMouseDown={sbMouseDown}>
-          <div className="arrow" style={{ top: sbPosition.y - 8, left: sbPosition.x - 8 }}></div>
+          <div
+            className="hue"
+            style={{
+              background: `linear-gradient(to right, #ffffff, hsl(${
+                (cTop / 256) * 360
+              }, 100%, 50%))`,
+            }}
+          />
+          <div className="saturation" />
+          <div
+            className="arrow"
+            style={{
+              backgroundColor: "#" + cpColor.HEX,
+              top: sbPosition.y - 8,
+              left: sbPosition.x - 8,
+            }}
+          ></div>
         </div>
         <div className="c draggNone" onMouseDown={cMouseDown}>
           <div className="arrow" style={{ top: cTop }}></div>
