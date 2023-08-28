@@ -13,6 +13,7 @@ type cpColor = {
   HEX: string | "null";
   RGB: string | "null";
   HSL: string | "null";
+  PRGB: Color;
 };
 
 function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
@@ -71,20 +72,22 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
 
   // 컬러피커 rgb로 정보 입력
   function setCPtoRGB(color: Color): cpColor {
-    if (color === null) return { HEX: "null", RGB: "null", HSL: "null" };
+    if (color === null) return { HEX: "null", RGB: "null", HSL: "null", PRGB: null };
     const RGB = color.r + "," + color.g + "," + color.b;
     const HEX = RGBtoHex([color.r, color.g, color.b]);
     const HSL = RGBtoHSL(color.r, color.g, color.b).join(",");
-    return { HEX: HEX, RGB: RGB, HSL: HSL };
+    return { HEX: HEX, RGB: RGB, HSL: HSL, PRGB: color };
   }
 
   // 컬러피커 hsl로 정보 입력
   const setCPtoHSL = useCallback((color: { h: number; s: number; l: number } | null): cpColor => {
-    if (color === null) return { HEX: "null", RGB: "null", HSL: "null" };
+    if (color === null) return { HEX: "null", RGB: "null", HSL: "null", PRGB: null };
     const HSL = color.h + "," + color.s + "," + color.l;
-    const RGB = HSLtoRGB(color.h, color.s, color.l).join(",");
-    const HEX = RGBtoHex(HSLtoRGB(color.h, color.s, color.l));
-    return { HEX: HEX, RGB: RGB, HSL: HSL };
+    const rgb_list = HSLtoRGB(color.h, color.s, color.l);
+    const RGB = rgb_list.join(",");
+    const HEX = RGBtoHex(rgb_list);
+    const PRGB: Color = { r: rgb_list[0], g: rgb_list[1], b: rgb_list[2] };
+    return { HEX: HEX, RGB: RGB, HSL: HSL, PRGB: PRGB };
   }, []);
 
   // 색조 및 채도 변경
@@ -297,6 +300,13 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
     return [hslH, Math.round(hsvS), Math.round(hsvV)];
   }
 
+  function setPaletteColor() {
+    if (FS) {
+      setPalette({ ...palette, fill: cpColor.PRGB });
+    }
+    setOpen(false);
+  }
+
   // 팔레트 닫기 기능
   useEffect(() => {
     // 외부영역 클릭 이벤트 감지후 팔레트 닫음
@@ -336,12 +346,14 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
     return () => window.removeEventListener("mouseup", handleMouseUp);
   }, [open]);
 
+  // 팔레트 정보 변경시 포인터 이동
   useEffect(() => {
     const HSL_list = cpColor.HSL.split(",");
-    const HSV = HSLtoHSV(Number(HSL_list[0]), Number(HSL_list[1]), Number(HSL_list[2]));
+    const H = isNaN(Number(HSL_list[0])) ? cTop : Number(HSL_list[0]);
+    const HSV = HSLtoHSV(H, Number(HSL_list[1]), Number(HSL_list[2]));
     setCTop((HSV[0] * 256) / 360);
     setSBPosition({ x: (HSV[1] * 256) / 100, y: 256 - (HSV[2] * 256) / 100 });
-  }, [cpColor]);
+  }, [cpColor, cTop]);
 
   return (
     <>
@@ -443,28 +455,32 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
               ${palette.fill === null ? "null" : ""}`}
             onClick={colorFill}
             style={{
-              backgroundColor: `rgba(
-                ${palette.fill !== null ? palette.fill.r : 255},
-                ${palette.fill !== null ? palette.fill.g : 255},
-                ${palette.fill !== null ? palette.fill.b : 255})`,
+              backgroundColor: `rgb(
+                ${
+                  palette.fill
+                    ? `${palette.fill.r}, ${palette.fill.g}, ${palette.fill.b}`
+                    : "255, 255, 255"
+                })`,
             }}
-          ></div>
+          />
           <div
             className={`color-stroke 
               ${FS ? "" : "active"} 
               ${palette.stroke === null ? "null" : ""}`}
             onClick={colorStroke}
             style={{
-              backgroundColor: `rgba(
-                ${palette.stroke !== null ? palette.stroke.r : 255},
-                ${palette.stroke !== null ? palette.stroke.g : 255},
-                ${palette.stroke !== null ? palette.stroke.b : 255})`,
+              backgroundColor: `rgb(
+                ${
+                  palette.stroke
+                    ? `${palette.stroke.r}, ${palette.stroke.g}, ${palette.stroke.b}`
+                    : "255, 255, 255"
+                })`,
             }}
           >
             <div className="fill" />
           </div>
-          <div className="color-toggle" onClick={toggleFS}></div>
-          <div className="color-default" onClick={colorDefault}></div>
+          <div className="color-toggle" onClick={toggleFS} />
+          <div className="color-default" onClick={colorDefault} />
         </div>
       </div>
       <div className={`color-picker ${open ? "open" : ""}`} ref={cpRef}>
@@ -491,44 +507,73 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
           <div className="arrow" style={{ top: cTop }}></div>
         </div>
         <div className="info">
-          <fieldset>
-            <legend className="draggNone">COLOR</legend>
-            <div
-              className={`color ${cpColor.HEX === null ? "null" : ""}`}
-              style={{ backgroundColor: `rgb(${cpColor.RGB})` }}
-            />
-          </fieldset>
-          <fieldset>
-            <legend className="draggNone">HEX</legend>
-            <input
-              id="HEX"
-              value={cpColor.HEX !== null ? cpColor.HEX : "null"}
-              maxLength={6}
-              autoComplete="off"
-              placeholder="FFFFFF"
-              onChange={(e) => cbChange(e, "HEX")}
-            />
-          </fieldset>
-          <fieldset>
-            <legend className="draggNone">RGB</legend>
-            <input
-              id="RGB"
-              value={cpColor.RGB !== null ? cpColor.RGB : "null"}
-              autoComplete="off"
-              placeholder="255, 255, 255"
-              onChange={(e) => cbChange(e, "RGB")}
-            />
-          </fieldset>
-          <fieldset>
-            <legend className="draggNone">HSL</legend>
-            <input
-              id="HSL"
-              value={cpColor.HSL !== null ? cpColor.HSL : "null"}
-              autoComplete="off"
-              placeholder="0, 0, 100"
-              onChange={(e) => cbChange(e, "HSL")}
-            />
-          </fieldset>
+          <div className="info-top">
+            <div className="current-new">
+              new
+              <div
+                className={`color ${cpColor.HEX === "null" ? "null" : ""}`}
+                style={{
+                  backgroundColor: `rgb(${cpColor.RGB !== "null" ? cpColor.RGB : "255, 255, 255"})`,
+                }}
+              />
+              <div
+                className={`color ${
+                  FS ? (palette.fill === null ? "null" : "") : palette.stroke === null ? "null" : ""
+                }`}
+                style={{
+                  backgroundColor: `rgb(
+                ${
+                  FS
+                    ? palette.fill
+                      ? `${palette.fill.r}, ${palette.fill.g}, ${palette.fill.b}`
+                      : "255, 255, 255"
+                    : palette.stroke
+                    ? `${palette.stroke.r}, ${palette.stroke.g}, ${palette.stroke.b}`
+                    : "255, 255, 255"
+                }
+                )`,
+                }}
+              />
+              current
+            </div>
+            <div className="btn-group">
+              <button onClick={setPaletteColor}>ok</button>
+              <button onClick={(e) => setOpen(false)}>cancel</button>
+            </div>
+          </div>
+          <div className="info-bottom">
+            <fieldset>
+              <legend className="draggNone">HEX</legend>
+              <input
+                id="HEX"
+                value={cpColor.HEX !== "null" ? cpColor.HEX : "null"}
+                maxLength={6}
+                autoComplete="off"
+                placeholder="FFFFFF"
+                onChange={(e) => cbChange(e, "HEX")}
+              />
+            </fieldset>
+            <fieldset>
+              <legend className="draggNone">RGB</legend>
+              <input
+                id="RGB"
+                value={cpColor.RGB !== "null" ? cpColor.RGB : "null"}
+                autoComplete="off"
+                placeholder="255, 255, 255"
+                onChange={(e) => cbChange(e, "RGB")}
+              />
+            </fieldset>
+            <fieldset>
+              <legend className="draggNone">HSL</legend>
+              <input
+                id="HSL"
+                value={cpColor.HSL !== "null" ? cpColor.HSL : "null"}
+                autoComplete="off"
+                placeholder="0, 0, 100"
+                onChange={(e) => cbChange(e, "HSL")}
+              />
+            </fieldset>
+          </div>
         </div>
       </div>
     </>
