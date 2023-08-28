@@ -15,7 +15,8 @@ function Panel({ tool, select, canvasSize, setCanvasSize, svgList }: Props) {
         width: canvasSize.width,
         height: Number(e.target.value),
       });
-    } else if (e.target.id === "width") {
+    }
+    if (e.target.id === "width") {
       setCanvasSize({
         width: Number(e.target.value),
         height: canvasSize.height,
