@@ -45,7 +45,13 @@ type Property<T> = T extends "pencil"
       strokeWidth: number;
     }
   : T extends "ellipse"
-  ? {}
+  ? {
+      position: Position;
+      radius: Position;
+      fill: Color;
+      stroke: Color;
+      strokeWidth: number;
+    }
   : T extends "polygon"
   ? {}
   : T extends "path"

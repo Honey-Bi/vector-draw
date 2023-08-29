@@ -8,6 +8,7 @@ import {
   SvgObject,
   Palette,
   SvgType,
+  Color,
 } from "../types";
 
 type Props = {
@@ -23,6 +24,7 @@ type Props = {
 const ErrorMsg = {
   strokeNull: "선 색상이 선택되지 않았습니다..",
   fillStrokeNull: "선 또는 채우기 색상이 선택되지 않았습니다.",
+  notYet: "준비 안됨",
 };
 
 function Canvas({
@@ -61,6 +63,11 @@ function Canvas({
           }
           return;
         case "pencil":
+          if (palette.stroke === null) {
+            result = ErrorMsg["strokeNull"];
+            break;
+          }
+
           break;
         case "line": // complete
           if (palette.stroke === null) {
@@ -97,7 +104,7 @@ function Canvas({
             },
           } as SvgObject<"rect">;
           break;
-        case "circle":
+        case "circle": // complete
           if (palette.fill === null && palette.stroke === null) {
             result = ErrorMsg["fillStrokeNull"];
             break;
@@ -106,22 +113,48 @@ function Canvas({
             id: `ellipse-${id}`,
             title: tool,
             type: "ellipse",
-            fill: palette.fill,
-            stroke: palette.stroke,
-            strokeWidth: 5,
-          };
+            property: {
+              fill: palette.fill,
+              stroke: palette.stroke,
+              strokeWidth: 2,
+              position: position,
+              radius: { x: 0, y: 0 },
+            },
+          } as SvgObject<"ellipse">;
           break;
         case "shape":
+          if (palette.fill === null && palette.stroke === null) {
+            result = ErrorMsg["fillStrokeNull"];
+            break;
+          }
           break;
         case "path":
+          result = ErrorMsg["strokeNull"];
           break;
         case "text":
+          if (palette.fill === null && palette.stroke === null) {
+            result = ErrorMsg["fillStrokeNull"];
+            break;
+          }
+          result = {
+            id: `text-${id}`,
+            title: tool,
+            type: "text",
+            property: {
+              fill: palette.fill,
+              stroke: palette.stroke,
+              strokeWidth: 2,
+              fontSize: 10,
+              position: position,
+              content: "",
+            },
+          } as SvgObject<"text">;
           break;
-        case "zoom":
+        case "zoom": // complete
           zoomIO();
-          break;
+          return;
         case "spoid":
-          break;
+          return;
       }
       if (typeof result === "string") {
         setMouseOn(false);
@@ -139,18 +172,18 @@ function Canvas({
       let last = svgList.current[svgList.current.length - 1];
       switch (tool) {
         case "pencil": {
-          let tmp = last as SvgObject<"pencil">;
+          // let tmp = last as SvgObject<"pencil">;
           // setPostion(position);
           break;
         }
+        // complete
         case "line": {
-          // complete
           const tmp = last as SvgObject<"line">;
           tmp.property.position2 = position;
           break;
         }
+        // complete
         case "rect": {
-          // complete
           const tmp = last as SvgObject<"rect">;
           if (position.x > cPosition.x) {
             // right
@@ -172,14 +205,28 @@ function Canvas({
           break;
         }
         case "circle":
+          const tmp = last as SvgObject<"ellipse">;
+          if (position.x > cPosition.x) {
+            // right
+            tmp.property.radius.x = (position.x - cPosition.x) / 2;
+          } else if (position.x < cPosition.x) {
+            // left
+            tmp.property.radius.x = (cPosition.x - position.x) / 2;
+          }
+          if (position.y > cPosition.y) {
+            // bottom
+            tmp.property.radius.y = (position.y - cPosition.y) / 2;
+          } else {
+            // top
+            tmp.property.radius.y = (cPosition.y - position.y) / 2;
+          }
+
+          tmp.property.position.x = (position.x + cPosition.x) / 2;
+          tmp.property.position.y = (position.y + cPosition.y) / 2;
           break;
         case "shape":
           break;
         case "path":
-          break;
-        case "text":
-          break;
-        case "zoom":
           break;
         case "spoid":
           break;
@@ -192,7 +239,7 @@ function Canvas({
   const MouseUpHandler = (e: React.MouseEvent) => {
     setMouseOn(false);
     if (tool !== "select") {
-      let last = svgList.current[svgList.current.length - 1];
+      // let last = svgList.current[svgList.current.length - 1];
     }
   };
 
@@ -216,11 +263,12 @@ function Canvas({
         case "pencil":
           result.push(<path key={index.id} id={index.id} />);
           break;
+        // complete
         case "line": {
-          // complete
           const tmp = index as SvgObject<"line">;
           result.push(
             <line
+              className={index.title}
               key={index.id}
               id={index.id}
               x1={tmp.property.position1.x}
@@ -228,53 +276,72 @@ function Canvas({
               x2={tmp.property.position2.x}
               y2={tmp.property.position2.y}
               strokeWidth={tmp.property.strokeWidth}
-              stroke={`rgba(
-                ${tmp.property.stroke.r},
-                ${tmp.property.stroke.g},
-                ${tmp.property.stroke.b})`}
+              stroke={RGBtoHEX(tmp.property.stroke)}
             />
           );
 
           break;
         }
+        // complete
         case "rect": {
-          // complete
           const tmp = index as SvgObject<"rect">;
           result.push(
             <rect
+              className={index.title}
               key={index.id}
               id={index.id}
               x={tmp.property.position.x}
               y={tmp.property.position.y}
               width={tmp.property.size.width}
               height={tmp.property.size.height}
-              fill={
-                tmp.property.fill
-                  ? `rgba(${tmp.property.fill.r},
-                  ${tmp.property.fill.g},
-                  ${tmp.property.fill.b})`
-                  : "none"
-              }
-              stroke={
-                tmp.property.stroke
-                  ? `rgba(${tmp.property.stroke.r},
-                  ${tmp.property.stroke.g},
-                  ${tmp.property.stroke.b})`
-                  : "none"
-              }
+              fill={RGBtoHEX(tmp.property.fill)}
+              stroke={RGBtoHEX(tmp.property.stroke)}
               strokeWidth={tmp.property.strokeWidth}
             />
           );
           break;
         }
-        case "ellipse":
+        case "ellipse": {
+          const tmp = index as SvgObject<"ellipse">;
+          result.push(
+            <ellipse
+              className={index.title}
+              key={index.id}
+              id={index.id}
+              cx={tmp.property.position.x}
+              cy={tmp.property.position.y}
+              rx={tmp.property.radius.x}
+              ry={tmp.property.radius.y}
+              strokeWidth={tmp.property.strokeWidth}
+              fill={RGBtoHEX(tmp.property.fill)}
+              stroke={RGBtoHEX(tmp.property.stroke)}
+            />
+          );
           break;
+        }
         case "polygon":
           break;
         case "path":
           break;
-        case "text":
+        case "text": {
+          const tmp = index as SvgObject<"text">;
+          result.push(
+            <text
+              className={index.title}
+              key={index.id}
+              id={index.id}
+              x={tmp.property.position.x}
+              y={tmp.property.position.y}
+              fontSize={tmp.property.fontSize}
+              strokeWidth={tmp.property.strokeWidth}
+              fill={RGBtoHEX(tmp.property.fill)}
+              stroke={RGBtoHEX(tmp.property.stroke)}
+            >
+              {tmp.property.content}
+            </text>
+          );
           break;
+        }
       }
     }
     return <>{result}</>;
@@ -300,8 +367,8 @@ function Canvas({
     if (canvasRef.current) {
       const clientRect = canvasRef.current.getBoundingClientRect();
       result = {
-        x: pageX - clientRect.left,
-        y: pageY - clientRect.top,
+        x: (pageX - clientRect.left) / zoom,
+        y: (pageY - clientRect.top) / zoom,
       };
     }
     return result;
@@ -310,6 +377,16 @@ function Canvas({
   function zoomChange(e: React.ChangeEvent<HTMLInputElement>) {
     setZoom(Number(e.target.value) / 100);
   }
+
+  function RGBtoHEX(color: Color): string {
+    let result = "#";
+    if (color) {
+      for (let i of Object.values(color)) result += i.toString(16);
+      return result;
+    }
+    return "none";
+  }
+
   return (
     <div className="wrap">
       <div
