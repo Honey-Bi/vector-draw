@@ -51,7 +51,10 @@ export default function Tool({
 
   // 팔레트 스왑 기능
   function toggleFS() {
-    setFS((prev) => !prev);
+    setPalette({
+      fill: palette.stroke,
+      stroke: palette.fill,
+    });
   }
 
   // 컬러피커 색상받을 상태변수
@@ -259,8 +262,17 @@ export default function Tool({
           >
             <div className="fill" />
           </div>
-          <div className="color-toggle" onClick={toggleFS} />
-          <div className="color-default" onClick={colorDefault} />
+          <div className="color-toggle" onClick={toggleFS}>
+            <svg viewBox="0 0 490.011 490.011" transform="rotate(180)">
+              <path d="M482.148,366.831l-97.6-88.6c-8.3-8.3-21.8-7.3-29.1,1c-8.3,8.3-7.3,21.9,1,29.2l57.8,52.1h-285v-286.2l51.9,58.1 c4.2,4.2,16.8,11,30.1,1c8.3-8.3,8.3-20.8,1-29.2l-88.2-98c-7.3-8.3-22.8-8.3-30.1,0l-88.2,98c-8.3,8.3-7.3,21.9,1,29.2 c8.3,8.3,21.8,7.3,29.1-1l51.9-58.1v306.1c0,11.5,9.3,20.8,20.8,20.8h307.1l-59,53.2c-8.3,8.3-8.3,20.8-1,29.2 c12.9,11.6,25.2,4.5,29.1,1l97.6-86.5C492.748,389.831,492.448,376.031,482.148,366.831z"></path>
+            </svg>
+          </div>
+          <div className="color-default" onClick={colorDefault}>
+            <svg viewBox="0 0 64 64" stroke="#000">
+              <rect width="40" height="40" rx="3" />
+              <rect x="20" y="20" width="40" height="40" rx="1" />
+            </svg>
+          </div>
           <div className={`color-picker ${open ? "open" : ""}`} ref={cpRef}>
             <SketchPicker
               width="300px"
