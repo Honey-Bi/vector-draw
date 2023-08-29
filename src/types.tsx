@@ -49,9 +49,14 @@ type Property<T> = T extends "pencil"
   : T extends "polygon"
   ? {}
   : T extends "path"
-  ? {}
+  ? { d: Shape[] }
   : /* text*/ {
-      d: Shape[];
+      fill: Color;
+      stroke: Color;
+      strokeWidth: number;
+      fontSize: number;
+      position: Position;
+      content: string;
     };
 
 type SvgObject<T extends SvgType> = {
