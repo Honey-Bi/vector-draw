@@ -24,11 +24,24 @@ type KeyBind = { ctrl: boolean; shift: boolean; alt: boolean };
 
 type SvgType = "pencil" | "line" | "rect" | "ellipse" | "polygon" | "path" | "text";
 
-type Command = "d" | "";
-type Shape = { command: Command; x?: number; y?: number };
+type Command = "l" | "c" | "z" | "m" | "h" | "v" | "t";
+
+type Path = {
+  c: Command;
+  x?: number;
+  y?: number;
+  x1?: number;
+  y1?: number;
+  x2?: number;
+  y2?: number;
+};
 
 type Property<T> = T extends "pencil"
-  ? {}
+  ? {
+      stroke: Color;
+      strokeWidth: number;
+      path: Path[];
+    }
   : T extends "line"
   ? {
       position1: Position;
@@ -55,7 +68,12 @@ type Property<T> = T extends "pencil"
   : T extends "polygon"
   ? {}
   : T extends "path"
-  ? { d: Shape[] }
+  ? {
+      fill: Color;
+      stroke: Color;
+      strokeWidth: number;
+      path: Path[];
+    }
   : /* text*/ {
       fill: Color;
       stroke: Color;

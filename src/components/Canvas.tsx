@@ -61,12 +61,21 @@ function Canvas({
             setSelect(null);
           }
           return;
-        case "pencil":
+        case "pencil": // complete
           if (palette.stroke === null) {
             result = ErrorMsg["strokeNull"];
             break;
           }
-
+          result = {
+            id: `pencil-${id}`,
+            title: tool,
+            type: "pencil",
+            property: {
+              stroke: palette.stroke,
+              strokeWidth: 1,
+              path: [{ c: "m", ...position }],
+            },
+          } as SvgObject<"pencil">;
           break;
         case "line": // complete
           if (palette.stroke === null) {
@@ -128,7 +137,7 @@ function Canvas({
           }
           break;
         case "path":
-          result = ErrorMsg["strokeNull"];
+          result = ErrorMsg["notYet"];
           break;
         case "text":
           if (palette.fill === null && palette.stroke === null) {
@@ -170,19 +179,22 @@ function Canvas({
       const position = getPosition(e.pageX, e.pageY);
       let last = svgList.current[svgList.current.length - 1];
       switch (tool) {
-        case "pencil": {
-          // let tmp = last as SvgObject<"pencil">;
-          // setPostion(position);
+        case "pencil": /* complete */ {
+          const tmp = last as SvgObject<"pencil">;
+          tmp.property.path.push({
+            c: "l",
+            x: e.movementX / zoom,
+            y: e.movementY / zoom,
+          });
           break;
         }
-        // complete
-        case "line": {
+        case "line": /* complete */ {
           const tmp = last as SvgObject<"line">;
+
           tmp.property.position2 = position;
           break;
         }
-        // complete
-        case "rect": {
+        case "rect": /* complete */ {
           const tmp = last as SvgObject<"rect">;
           if (position.x > cPosition.x) {
             // right
@@ -203,7 +215,7 @@ function Canvas({
 
           break;
         }
-        case "circle":
+        case "circle": /* complete */ {
           const tmp = last as SvgObject<"ellipse">;
           if (position.x > cPosition.x) {
             // right
@@ -223,6 +235,7 @@ function Canvas({
           tmp.property.position.x = (position.x + cPosition.x) / 2;
           tmp.property.position.y = (position.y + cPosition.y) / 2;
           break;
+        }
         case "shape":
           break;
         case "path":
@@ -259,9 +272,25 @@ function Canvas({
     let result = [];
     for (let index of svgList.current) {
       switch (index.type) {
-        case "pencil":
-          result.push(<path key={index.id} id={index.id} />);
+        case "pencil": {
+          const tmp = index as SvgObject<"pencil">;
+          let d = "";
+          for (let i of tmp.property.path) {
+            d += " " + Object.values(i).join(" ");
+          }
+          result.push(
+            <path
+              className={index.title}
+              key={index.id}
+              id={index.id}
+              strokeWidth={tmp.property.strokeWidth}
+              stroke={RGBtoHEX(tmp.property.stroke)}
+              d={d + " "}
+              fill="none"
+            />
+          );
           break;
+        }
         // complete
         case "line": {
           const tmp = index as SvgObject<"line">;
