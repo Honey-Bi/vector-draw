@@ -272,7 +272,7 @@ function Canvas({
     let result = [];
     for (let index of svgList.current) {
       switch (index.type) {
-        case "pencil": {
+        case "pencil": /* complete */ {
           const tmp = index as SvgObject<"pencil">;
           let d = "";
           for (let i of tmp.property.path) {
@@ -291,8 +291,7 @@ function Canvas({
           );
           break;
         }
-        // complete
-        case "line": {
+        case "line": /* complete */ {
           const tmp = index as SvgObject<"line">;
           result.push(
             <line
@@ -310,8 +309,7 @@ function Canvas({
 
           break;
         }
-        // complete
-        case "rect": {
+        case "rect": /* complete */ {
           const tmp = index as SvgObject<"rect">;
           result.push(
             <rect
@@ -329,7 +327,7 @@ function Canvas({
           );
           break;
         }
-        case "ellipse": {
+        case "ellipse": /* complete */ {
           const tmp = index as SvgObject<"ellipse">;
           result.push(
             <ellipse
@@ -372,9 +370,19 @@ function Canvas({
         }
       }
     }
-    return <>{result}</>;
+    return (
+      <svg
+        viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
+        width={canvasSize.width}
+        height={canvasSize.height}
+        ref={canvasRef}
+      >
+        {result}
+      </svg>
+    );
   }
 
+  // 확대/축소 리스트 생성
   function renderZoomList(): JSX.Element {
     let result = [];
     const zoomList = [
@@ -390,6 +398,7 @@ function Canvas({
     return <ul className="zoom-list">{result}</ul>;
   }
 
+  // 현재 마우스위치 가져오기
   function getPosition(pageX: number, pageY: number): Position {
     let result = { x: 0, y: 0 };
     if (canvasRef.current) {
@@ -402,10 +411,12 @@ function Canvas({
     return result;
   }
 
+  // input 확대/축소 변경
   function zoomChange(e: React.ChangeEvent<HTMLInputElement>) {
     setZoom(Number(e.target.value) / 100);
   }
 
+  // RGB 값 HEX로 변경 null 이면 "none" 반환
   function RGBtoHEX(color: Color): string {
     let result = "#";
     if (color) {
@@ -437,14 +448,7 @@ function Canvas({
             transform: `scale(${zoom})`,
           }}
         >
-          <svg
-            viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
-            width={canvasSize.width}
-            height={canvasSize.height}
-            ref={canvasRef}
-          >
-            {renderSvgObject()}
-          </svg>
+          {renderSvgObject()}
         </div>
       </div>
       <div className="canvas-footer">
