@@ -280,6 +280,21 @@ function Canvas({
     return <>{result}</>;
   }
 
+  function renderZoomList(): JSX.Element {
+    let result = [];
+    const zoomList = [
+      25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400, 500,
+    ];
+    for (let i of zoomList) {
+      result.push(
+        <li key={i} className="zoom-item" onMouseDown={() => setZoom(i / 100)}>
+          {i}
+        </li>
+      );
+    }
+    return <ul className="zoom-list">{result}</ul>;
+  }
+
   function getPosition(pageX: number, pageY: number): Position {
     let result = { x: 0, y: 0 };
     if (canvasRef.current) {
@@ -292,6 +307,9 @@ function Canvas({
     return result;
   }
 
+  function zoomChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setZoom(Number(e.target.value) / 100);
+  }
   return (
     <div className="wrap">
       <div
@@ -325,7 +343,14 @@ function Canvas({
         </div>
       </div>
       <div className="canvas-footer">
-        <div className="zoom">{zoom * 100}%</div>
+        <input
+          type="number"
+          className="zoom"
+          min={1}
+          value={Math.round(zoom * 100)}
+          onChange={zoomChange}
+        />
+        {renderZoomList()}
       </div>
     </div>
   );

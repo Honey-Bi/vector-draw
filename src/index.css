@@ -22,16 +22,19 @@ div:focus-visible {
 }
 li {
   list-style: none;
-  height: 2rem;
-  line-height: 2rem;
-  white-space: nowrap;
-  padding: 0 0.5rem 0 0.75rem;
 }
 ul {
   padding: 0;
+  margin: 0;
 }
 /* 상단 메뉴 바 */
 .menu {
+  & li {
+    height: 2rem;
+    line-height: 2rem;
+    white-space: nowrap;
+    padding: 0 0.5rem 0 0.75rem;
+  }
   margin: 0;
   z-index: 6;
   width: 100%;
@@ -213,10 +216,19 @@ ul {
     .color-toggle,
     .color-default {
       position: absolute;
+      cursor: pointer;
+      width: 0.5rem;
+      height: 0.5rem;
+      & > svg {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        fill: white;
+      }
     }
     .color-toggle {
-      top: 0;
-      right: 0;
+      top: 0rem;
+      right: 0rem;
     }
     .color-default {
       bottom: 0;
@@ -290,6 +302,7 @@ ul {
   & > .svg-canvas {
     display: flex;
     margin: auto;
+    transition: transform 0.5s ease;
     & > svg {
       background-color: white;
       margin: auto;
@@ -315,10 +328,51 @@ ul {
   }
 }
 .canvas-footer {
-  text-align: right;
   flex-shrink: 0;
-  height: 1rem;
   padding: 0.25rem 0.75rem;
+  position: relative;
+  .zoom {
+    display: inline;
+    float: right;
+    font-size: 1rem;
+    position: relative;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 3rem;
+    color: white;
+    outline: none;
+    padding: 1px 0.25rem;
+    border: 1px solid white;
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    &:focus-visible {
+      background-color: rgb(70, 255, 255, 0.1);
+    }
+    &:focus-visible + .zoom-list {
+      display: block;
+    }
+  }
+  .zoom-list {
+    position: absolute;
+    bottom: 100%;
+    display: none;
+    right: 0.75rem;
+    border: 1px solid white;
+    & > li {
+      cursor: pointer;
+      width: 3rem;
+      background-color: #464646;
+      padding: 1px 0.25rem;
+      &:hover {
+        background-color: #989898;
+      }
+    }
+    /* background-color: white; */
+  }
 }
 .panel {
   height: 100%;
