@@ -4,7 +4,7 @@ import Panel from "./components/Panel";
 import Tool from "./components/Tool";
 import Canvas from "./components/Canvas";
 
-import { Tools, Select, Palette, KeyBind, Size, SvgObject } from "./types";
+import { Tools, Select, Palette, KeyBind, Size, SvgObject, SvgType } from "./types";
 import "./index.css";
 
 export default function App() {
@@ -24,7 +24,7 @@ export default function App() {
     height: 400,
   });
 
-  const svgList = useRef<SvgObject[]>([]);
+  const svgList = useRef<SvgObject<SvgType>[]>([]);
 
   // 단축키 함수
   function shortcuts(e: React.KeyboardEvent) {

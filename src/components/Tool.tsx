@@ -72,8 +72,7 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
 
   // 컬러피커 rgb로 정보 입력
   function setCPtoRGB(color: Color): cpColor {
-    if (color === null)
-      return { HEX: "null", RGB: "null", HSL: "null", PRGB: null };
+    if (color === null) return { HEX: "null", RGB: "null", HSL: "null", PRGB: null };
     const RGB = color.r + "," + color.g + "," + color.b;
     const HEX = RGBtoHex([color.r, color.g, color.b]);
     const HSL = RGBtoHSL(color.r, color.g, color.b).join(",");

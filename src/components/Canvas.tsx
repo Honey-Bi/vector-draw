@@ -7,6 +7,7 @@ import {
   Size,
   SvgObject,
   Palette,
+  SvgType,
 } from "../types";
 
 type Props = {
@@ -15,7 +16,7 @@ type Props = {
   keyBind: KeyBind;
   shortcutTool: (e: React.KeyboardEvent) => void;
   canvasSize: Size;
-  svgList: React.MutableRefObject<SvgObject[]>;
+  svgList: React.MutableRefObject<SvgObject<SvgType>[]>;
   palette: Palette;
 };
 
@@ -49,7 +50,7 @@ function Canvas({
       const position = getPosition(e.pageX, e.pageY);
       setCPosition(getPosition(e.pageX, e.pageY));
       const id = svgList.current.length;
-      let result: SvgObject | string = "";
+      var result: SvgObject<SvgType> | string = "";
       switch (tool) {
         case "select":
           const target = e.target as Element;
@@ -70,11 +71,13 @@ function Canvas({
             id: `${tool}-${id}`,
             title: tool,
             type: "line",
-            stroke: palette.stroke,
-            strokeWidth: 5,
-            position1: position,
-            position2: position,
-          };
+            property: {
+              stroke: palette.stroke,
+              strokeWidth: 2,
+              position1: position,
+              position2: position,
+            },
+          } as SvgObject<"line">;
           break;
         case "rect": // complete
           if (palette.fill === null && palette.stroke === null) {
@@ -85,12 +88,14 @@ function Canvas({
             id: `${tool}-${id}`,
             title: tool,
             type: "rect",
-            fill: palette.fill,
-            stroke: palette.stroke,
-            strokeWidth: 5,
-            position: position,
-            size: { width: 0, height: 0 },
-          };
+            property: {
+              fill: palette.fill,
+              stroke: palette.stroke,
+              strokeWidth: 2,
+              position: position,
+              size: { width: 0, height: 0 },
+            },
+          } as SvgObject<"rect">;
           break;
         case "circle":
           if (palette.fill === null && palette.stroke === null) {
@@ -133,32 +138,39 @@ function Canvas({
       const position = getPosition(e.pageX, e.pageY);
       let last = svgList.current[svgList.current.length - 1];
       switch (tool) {
-        case "pencil":
-          // svgList.current[svgList.current.length - 1].points?.push(position);
+        case "pencil": {
+          let tmp = last as SvgObject<"pencil">;
           // setPostion(position);
           break;
-        case "line": // complete
-          last.position2 = position;
+        }
+        case "line": {
+          // complete
+          const tmp = last as SvgObject<"line">;
+          tmp.property.position2 = position;
           break;
-        case "rect": // complete
+        }
+        case "rect": {
+          // complete
+          const tmp = last as SvgObject<"rect">;
           if (position.x > cPosition.x) {
             // right
-            last.size!.width = position.x - cPosition.x;
+            tmp.property.size.width = position.x - cPosition.x;
           } else if (position.x < cPosition.x) {
             // left
-            last.position!.x = position.x;
-            last.size!.width = cPosition.x - position.x;
+            tmp.property.position.x = position.x;
+            tmp.property.size.width = cPosition.x - position.x;
           }
           if (position.y > cPosition.y) {
             // bottom
-            last.size!.height = position.y - cPosition.y;
+            tmp.property.size.height = position.y - cPosition.y;
           } else {
             // top
-            last.position!.y = position.y;
-            last.size!.height = cPosition.y - position.y;
+            tmp.property.position.y = position.y;
+            tmp.property.size.height = cPosition.y - position.y;
           }
 
           break;
+        }
         case "circle":
           break;
         case "shape":
@@ -204,51 +216,57 @@ function Canvas({
         case "pencil":
           result.push(<path key={index.id} id={index.id} />);
           break;
-        case "line": // complete
+        case "line": {
+          // complete
+          const tmp = index as SvgObject<"line">;
           result.push(
             <line
               key={index.id}
               id={index.id}
-              x1={index.position1!.x}
-              y1={index.position1!.y}
-              x2={index.position2!.x}
-              y2={index.position2!.y}
-              strokeWidth={index.strokeWidth!}
+              x1={tmp.property.position1.x}
+              y1={tmp.property.position1.y}
+              x2={tmp.property.position2.x}
+              y2={tmp.property.position2.y}
+              strokeWidth={tmp.property.strokeWidth}
               stroke={`rgba(
-                ${index.stroke!.r},
-                ${index.stroke!.g},
-                ${index.stroke!.b})`}
+                ${tmp.property.stroke.r},
+                ${tmp.property.stroke.g},
+                ${tmp.property.stroke.b})`}
             />
           );
 
           break;
-        case "rect": // complete
+        }
+        case "rect": {
+          // complete
+          const tmp = index as SvgObject<"rect">;
           result.push(
             <rect
               key={index.id}
               id={index.id}
-              x={index.position!.x}
-              y={index.position!.y}
-              width={index.size!.width}
-              height={index.size!.height}
+              x={tmp.property.position.x}
+              y={tmp.property.position.y}
+              width={tmp.property.size.width}
+              height={tmp.property.size.height}
               fill={
-                index.fill
-                  ? `rgba(${index.fill!.r}, 
-                  ${index.fill!.g}, 
-                  ${index.fill!.b})`
+                tmp.property.fill
+                  ? `rgba(${tmp.property.fill.r},
+                  ${tmp.property.fill.g},
+                  ${tmp.property.fill.b})`
                   : "none"
               }
               stroke={
-                index.stroke
-                  ? `rgba(${index.stroke!.r}, 
-                  ${index.stroke!.g}, 
-                  ${index.stroke!.b})`
+                tmp.property.stroke
+                  ? `rgba(${tmp.property.stroke.r},
+                  ${tmp.property.stroke.g},
+                  ${tmp.property.stroke.b})`
                   : "none"
               }
-              strokeWidth={index.strokeWidth}
+              strokeWidth={tmp.property.strokeWidth}
             />
           );
           break;
+        }
         case "ellipse":
           break;
         case "polygon":

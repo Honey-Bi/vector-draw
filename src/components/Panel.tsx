@@ -1,12 +1,12 @@
 import React from "react";
-import { Select, Size, SvgObject, Tools } from "../types";
+import { Select, Size, SvgObject, SvgType, Tools } from "../types";
 
 type Props = {
   tool: Tools;
   select: Select;
   canvasSize: Size;
   setCanvasSize: (e: Size) => void;
-  svgList: React.MutableRefObject<SvgObject[]>;
+  svgList: React.MutableRefObject<SvgObject<SvgType>[]>;
 };
 function Panel({ tool, select, canvasSize, setCanvasSize, svgList }: Props) {
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {

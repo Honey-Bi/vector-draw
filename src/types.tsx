@@ -15,42 +15,56 @@ type Size = { width: number; height: number };
 
 type Select = SVGSVGElement | null;
 
-type Color = { r: number; g: number; b: number } | null;
+type RGB = { r: number; g: number; b: number };
+type Color = RGB | null;
 
 type Palette = { fill: Color; stroke: Color };
 
 type KeyBind = { ctrl: boolean; shift: boolean; alt: boolean };
 
-type SvgType =
-  | "pencil"
-  | "line"
-  | "rect"
-  | "ellipse"
-  | "polygon"
-  | "path"
-  | "text";
+type SvgType = "pencil" | "line" | "rect" | "ellipse" | "polygon" | "path" | "text";
 
 type Command = "d" | "";
 type Shape = { command: Command; x?: number; y?: number };
 
-type SvgObject = {
+type Property<T> = T extends "pencil"
+  ? {}
+  : T extends "line"
+  ? {
+      position1: Position;
+      position2: Position;
+      strokeWidth: number;
+      stroke: RGB;
+    }
+  : T extends "rect"
+  ? {
+      position: Position;
+      size: Size;
+      fill: Color;
+      stroke: Color;
+      strokeWidth: number;
+    }
+  : T extends "ellipse"
+  ? {}
+  : T extends "polygon"
+  ? {}
+  : T extends "path"
+  ? {}
+  : /* text*/ {
+      d: Shape[];
+    };
+
+type SvgObject<T extends SvgType> = {
   id: string;
   title: string;
-  type: SvgType;
-  position?: Position;
-  position1?: Position;
-  position2?: Position;
-  fill?: Color;
-  size?: Size;
-  stroke?: Color;
-  strokeWidth?: number;
-  points?: Position[];
-  d?: Shape[];
+  type: T;
+  property: Property<T>;
 };
 
 export type {
   Tools,
   Position,
+  SvgType,
   Select,
   Palette,
   Color,
