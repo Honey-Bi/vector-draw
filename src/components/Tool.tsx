@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Color, Palette, Position, Tools } from "../types";
+import { ColorResult, SketchPicker } from "react-color";
 
 type Props = {
   tool: Tools;
