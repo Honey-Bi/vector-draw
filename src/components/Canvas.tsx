@@ -41,7 +41,6 @@ function Canvas({
   const [position, setPostion] = useState<Position>({ x: 0, y: 0 });
   const [cPosition, setCPosition] = useState<Position>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState<number>(1);
-  // const xmlns = "http://www.w3.org/2000/svg";
 
   useEffect(() => {}, [position]);
 
