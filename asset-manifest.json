@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/vector-draw/static/css/main.ec1f8c0c.css",
-    "main.js": "/vector-draw/static/js/main.48f4e5ee.js",
+    "main.css": "/vector-draw/static/css/main.c7c4f371.css",
+    "main.js": "/vector-draw/static/js/main.cf6f62af.js",
     "index.html": "/vector-draw/index.html",
-    "main.ec1f8c0c.css.map": "/vector-draw/static/css/main.ec1f8c0c.css.map",
-    "main.48f4e5ee.js.map": "/vector-draw/static/js/main.48f4e5ee.js.map"
+    "main.c7c4f371.css.map": "/vector-draw/static/css/main.c7c4f371.css.map",
+    "main.cf6f62af.js.map": "/vector-draw/static/js/main.cf6f62af.js.map"
   },
   "entrypoints": [
-    "static/css/main.ec1f8c0c.css",
-    "static/js/main.48f4e5ee.js"
+    "static/css/main.c7c4f371.css",
+    "static/js/main.cf6f62af.js"
   ]
 }
