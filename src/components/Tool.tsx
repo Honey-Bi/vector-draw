@@ -80,26 +80,20 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   }
 
   // 컬러피커 hsl로 정보 입력
-  const setCPtoHSL = useCallback(
-    (color: { h: number; s: number; l: number } | null): cpColor => {
-      if (color === null)
-        return { HEX: "null", RGB: "null", HSL: "null", PRGB: null };
-      const HSL = color.h + "," + color.s + "," + color.l;
-      const rgb_list = HSLtoRGB(color.h, color.s, color.l);
-      const RGB = rgb_list.join(",");
-      const HEX = RGBtoHex(rgb_list);
-      const PRGB: Color = { r: rgb_list[0], g: rgb_list[1], b: rgb_list[2] };
-      return { HEX: HEX, RGB: RGB, HSL: HSL, PRGB: PRGB };
-    },
-    []
-  );
+  const setCPtoHSL = useCallback((color: { h: number; s: number; l: number } | null): cpColor => {
+    if (color === null) return { HEX: "null", RGB: "null", HSL: "null", PRGB: null };
+    const HSL = color.h + "," + color.s + "," + color.l;
+    const rgb_list = HSLtoRGB(color.h, color.s, color.l);
+    const RGB = rgb_list.join(",");
+    const HEX = RGBtoHex(rgb_list);
+    const PRGB: Color = { r: rgb_list[0], g: rgb_list[1], b: rgb_list[2] };
+    return { HEX: HEX, RGB: RGB, HSL: HSL, PRGB: PRGB };
+  }, []);
 
   // 색조 및 채도 변경
   const setSB = useCallback(
     (x: number, y: number) => {
-      const sb = document
-        .getElementsByClassName("sb")[0]
-        .getBoundingClientRect();
+      const sb = document.getElementsByClassName("sb")[0].getBoundingClientRect();
       let position: Position = {
         x: x - sb.x,
         y: y - sb.y,
@@ -165,10 +159,7 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
   );
 
   // 컬러피커 입력값 변경
-  function cbChange(
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "HEX" | "RGB" | "HSL"
-  ) {
+  function cbChange(e: React.ChangeEvent<HTMLInputElement>, type: "HEX" | "RGB" | "HSL") {
     switch (type) {
       // HEX 값 변경
       case "HEX":
@@ -266,14 +257,9 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
     l /= 100;
     const k = (n: number) => (n + h / 30) % 12;
     const a = s * Math.min(l, 1 - l);
-    const f = (n: number) =>
-      l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
 
-    return [
-      Math.round(255 * f(0)),
-      Math.round(255 * f(8)),
-      Math.round(255 * f(4)),
-    ];
+    return [Math.round(255 * f(0)), Math.round(255 * f(8)), Math.round(255 * f(4))];
   }
 
   // RGB 값을 HSL로
@@ -283,18 +269,10 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
     b /= 255;
     const l = Math.max(r, g, b);
     const s = l - Math.min(r, g, b);
-    const h = s
-      ? l === r
-        ? (g - b) / s
-        : l === g
-        ? 2 + (b - r) / s
-        : 4 + (r - g) / s
-      : 0;
+    const h = s ? (l === r ? (g - b) / s : l === g ? 2 + (b - r) / s : 4 + (r - g) / s) : 0;
     return [
       Math.round(60 * h < 0 ? 60 * h + 360 : 60 * h),
-      Math.round(
-        100 * (s ? (l <= 0.5 ? s / (2 * l - s) : s / (2 - (2 * l - s))) : 0)
-      ),
+      Math.round(100 * (s ? (l <= 0.5 ? s / (2 * l - s) : s / (2 - (2 * l - s))) : 0)),
       Math.round((100 * (2 * l - s)) / 2),
     ];
   }
@@ -545,20 +523,12 @@ function Tool({ tool, setTool, palette, setPalette, shortcutTool }: Props) {
               <div
                 className={`color ${cpColor.HEX === "null" ? "null" : ""}`}
                 style={{
-                  backgroundColor: `rgb(${
-                    cpColor.RGB !== "null" ? cpColor.RGB : "255, 255, 255"
-                  })`,
+                  backgroundColor: `rgb(${cpColor.RGB !== "null" ? cpColor.RGB : "255, 255, 255"})`,
                 }}
               />
               <div
                 className={`color ${
-                  FS
-                    ? palette.fill === null
-                      ? "null"
-                      : ""
-                    : palette.stroke === null
-                    ? "null"
-                    : ""
+                  FS ? (palette.fill === null ? "null" : "") : palette.stroke === null ? "null" : ""
                 }`}
                 style={{
                   backgroundColor: `rgb(
