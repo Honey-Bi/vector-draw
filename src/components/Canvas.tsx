@@ -56,7 +56,7 @@ function Canvas({
         case "select":
           const target = e.target as Element;
           if (target.id) {
-            setSelect(e.target as SVGSVGElement);
+            setSelect(target.id);
           } else {
             setSelect(null);
           }
@@ -106,7 +106,7 @@ function Canvas({
             property: {
               fill: palette.fill,
               stroke: palette.stroke,
-              strokeWidth: 2,
+              strokeWidth: palette.stroke ? 1 : 0,
               position: position,
               size: { width: 0, height: 0 },
             },
@@ -124,7 +124,7 @@ function Canvas({
             property: {
               fill: palette.fill,
               stroke: palette.stroke,
-              strokeWidth: 2,
+              strokeWidth: palette.stroke ? 1 : 0,
               position: position,
               radius: { x: 0, y: 0 },
             },
@@ -250,8 +250,9 @@ function Canvas({
   //마우스 클릭 종료 이벤트
   const MouseUpHandler = (e: React.MouseEvent) => {
     setMouseOn(false);
-    if (tool !== "select") {
-      // let last = svgList.current[svgList.current.length - 1];
+    if (!["select", "zoom", "spoid"].includes(tool)) {
+      let last = svgList.current[svgList.current.length - 1];
+      setSelect(last.id);
     }
   };
 
@@ -273,7 +274,7 @@ function Canvas({
     for (let index of svgList.current) {
       switch (index.type) {
         case "pencil": /* complete */ {
-          const tmp = index as SvgObject<"pencil">;
+          const tmp = index as SvgObject<typeof index.type>;
           let d = "";
           for (let i of tmp.property.path) {
             d += " " + Object.values(i).join(" ");
@@ -292,7 +293,7 @@ function Canvas({
           break;
         }
         case "line": /* complete */ {
-          const tmp = index as SvgObject<"line">;
+          const tmp = index as SvgObject<typeof index.type>;
           result.push(
             <line
               className={index.title}
@@ -310,7 +311,7 @@ function Canvas({
           break;
         }
         case "rect": /* complete */ {
-          const tmp = index as SvgObject<"rect">;
+          const tmp = index as SvgObject<typeof index.type>;
           result.push(
             <rect
               className={index.title}
@@ -328,7 +329,7 @@ function Canvas({
           break;
         }
         case "ellipse": /* complete */ {
-          const tmp = index as SvgObject<"ellipse">;
+          const tmp = index as SvgObject<typeof index.type>;
           result.push(
             <ellipse
               className={index.title}
@@ -350,7 +351,7 @@ function Canvas({
         case "path":
           break;
         case "text": {
-          const tmp = index as SvgObject<"text">;
+          const tmp = index as SvgObject<typeof index.type>;
           result.push(
             <text
               className={index.title}

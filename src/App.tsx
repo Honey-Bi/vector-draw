@@ -24,6 +24,9 @@ export default function App() {
     height: 400,
   });
 
+  // undo, redo용 유저행동정보 저장용 상태
+  const timeline = useRef([]);
+
   const svgList = useRef<SvgObject<SvgType>[]>([]);
 
   // 단축키 함수
@@ -119,7 +122,6 @@ export default function App() {
           svgList={svgList}
         />
         <Panel
-          tool={tool}
           select={select}
           canvasSize={canvasSize}
           setCanvasSize={setCanvasSize}
