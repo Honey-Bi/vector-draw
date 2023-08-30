@@ -27,7 +27,7 @@ export default function App() {
   // undo, redo용 유저행동정보 저장용 상태
   const timeline = useRef([]);
 
-  const svgList = useRef<SvgObject<SvgType>[]>([]);
+  const [svgList, setSvgList] = useState<SvgObject<SvgType>[]>([]);
 
   // 단축키 함수
   function shortcuts(e: React.KeyboardEvent) {
@@ -120,12 +120,14 @@ export default function App() {
           shortcutTool={shortcutTool}
           canvasSize={canvasSize}
           svgList={svgList}
+          setSvgList={setSvgList}
         />
         <Panel
           select={select}
           canvasSize={canvasSize}
           setCanvasSize={setCanvasSize}
           svgList={svgList}
+          setSvgList={setSvgList}
         />
       </div>
     </div>

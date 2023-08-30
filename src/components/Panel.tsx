@@ -5,9 +5,10 @@ type Props = {
   select: Select;
   canvasSize: Size;
   setCanvasSize: (e: Size) => void;
-  svgList: React.MutableRefObject<SvgObject<SvgType>[]>;
+  svgList: SvgObject<SvgType>[];
+  setSvgList: (e: SvgObject<SvgType>[]) => void;
 };
-function Panel({ select, canvasSize, setCanvasSize, svgList }: Props) {
+function Panel({ select, canvasSize, setCanvasSize, svgList, setSvgList }: Props) {
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.id === "height") {
       setCanvasSize({
@@ -25,7 +26,7 @@ function Panel({ select, canvasSize, setCanvasSize, svgList }: Props) {
 
   // 오브젝트 이름변경 함수
   function ObjectTitleChange(e: React.ChangeEvent<HTMLInputElement>, index: number) {
-    svgList.current[index].title = e.target.value;
+    svgList[index].title = e.target.value;
   }
 
   // Name input 렌더링 함수
@@ -38,7 +39,7 @@ function Panel({ select, canvasSize, setCanvasSize, svgList }: Props) {
           type="text"
           id="title"
           placeholder="NoTitle"
-          value={svgList.current[index].title}
+          value={svgList[index].title}
           onChange={(e) => ObjectTitleChange(e, index)}
         />
       </div>
@@ -54,7 +55,7 @@ function Panel({ select, canvasSize, setCanvasSize, svgList }: Props) {
     const value = Number(e.target.value);
     switch (type) {
       case "line": {
-        let item = svgList.current[index] as SvgObject<typeof type>;
+        let item = svgList[index] as SvgObject<typeof type>;
         switch (property) {
           case "positionX1":
             item.property.position1.x = value;
@@ -72,7 +73,7 @@ function Panel({ select, canvasSize, setCanvasSize, svgList }: Props) {
         break;
       }
       case "rect": {
-        let item = svgList.current[index] as SvgObject<typeof type>;
+        let item = svgList[index] as SvgObject<typeof type>;
         switch (property) {
           case "width":
           case "height":
@@ -92,7 +93,7 @@ function Panel({ select, canvasSize, setCanvasSize, svgList }: Props) {
     let result = [];
     switch (type) {
       case "line": {
-        let item = svgList.current[index] as SvgObject<typeof type>;
+        let item = svgList[index] as SvgObject<typeof type>;
         result.push(
           <div key={index}>
             <div className="row">
@@ -140,7 +141,7 @@ function Panel({ select, canvasSize, setCanvasSize, svgList }: Props) {
         break;
       }
       case "rect": {
-        let item = svgList.current[index] as SvgObject<typeof type>;
+        let item = svgList[index] as SvgObject<typeof type>;
         result.push(
           <>
             <div className="row" key={index}>

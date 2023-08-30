@@ -17,8 +17,9 @@ type Props = {
   keyBind: KeyBind;
   shortcutTool: (e: React.KeyboardEvent) => void;
   canvasSize: Size;
-  svgList: React.MutableRefObject<SvgObject<SvgType>[]>;
   palette: Palette;
+  svgList: SvgObject<SvgType>[];
+  setSvgList: (e: SvgObject<SvgType>[]) => void;
 };
 
 const ErrorMsg = {
@@ -35,6 +36,7 @@ function Canvas({
   canvasSize,
   svgList,
   palette,
+  setSvgList,
 }: Props) {
   const canvasRef = useRef<SVGSVGElement>(null);
   const [isMouseOn, setMouseOn] = useState<boolean>(false);
@@ -50,7 +52,7 @@ function Canvas({
       setMouseOn(true);
       const position = getPosition(e.pageX, e.pageY);
       setCPosition(getPosition(e.pageX, e.pageY));
-      const id = svgList.current.length;
+      const id = svgList.length;
       var result: SvgObject<SvgType> | string = "";
       switch (tool) {
         case "select":
@@ -168,7 +170,7 @@ function Canvas({
         setMouseOn(false);
         alert(result);
       } else {
-        svgList.current.push(result);
+        setSvgList([...svgList, result]);
       }
     }
   };
@@ -177,7 +179,7 @@ function Canvas({
   const MouseMoveHandler = (e: React.MouseEvent) => {
     if (canvasRef.current && isMouseOn) {
       const position = getPosition(e.pageX, e.pageY);
-      let last = svgList.current[svgList.current.length - 1];
+      let last = svgList[svgList.length - 1];
       switch (tool) {
         case "pencil": /* complete */ {
           const tmp = last as SvgObject<"pencil">;
@@ -251,7 +253,7 @@ function Canvas({
   const MouseUpHandler = (e: React.MouseEvent) => {
     setMouseOn(false);
     if (!["select", "zoom", "spoid"].includes(tool)) {
-      let last = svgList.current[svgList.current.length - 1];
+      let last = svgList[svgList.length - 1];
       setSelect(last.id);
     }
   };
@@ -271,7 +273,7 @@ function Canvas({
   // SVG Object list 랜더링 함수
   function renderSvgObject(): JSX.Element {
     let result = [];
-    for (let index of svgList.current) {
+    for (let index of svgList) {
       switch (index.type) {
         case "pencil": /* complete */ {
           const tmp = index as SvgObject<typeof index.type>;
