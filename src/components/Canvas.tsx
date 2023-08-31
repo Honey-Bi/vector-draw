@@ -467,6 +467,24 @@ function Canvas({
     return "none";
   }
 
+  function shorcutZoom(e: React.KeyboardEvent) {
+    if (e.ctrlKey && e.key === "1") {
+      setZoom(1);
+    }
+    if (e.ctrlKey && e.key === "0") {
+      if (canvasRef.current) {
+        const big = document.getElementsByClassName("canvas")[0].getBoundingClientRect();
+        const small = canvasRef.current.getBoundingClientRect();
+        let big_min = Math.min(big.width, big.height);
+        let small_max = Math.max(small.width, small.height);
+        setZoom((big_min * 100) / small_max / 100);
+      }
+    }
+  }
+  function handleKeyDown(e: React.KeyboardEvent) {
+    shortcutTool(e);
+    shorcutZoom(e);
+  }
   return (
     <div className="wrap">
       <div
@@ -475,7 +493,7 @@ function Canvas({
           ${keyBind.alt ? "alt" : ""} 
           ${keyBind.shift ? "shift" : ""}`}
         tabIndex={0}
-        onKeyDown={shortcutTool}
+        onKeyDown={handleKeyDown}
         onMouseDown={MouseOnHandler}
         onMouseMove={MouseMoveHandler}
         onMouseUp={MouseUpHandler}
