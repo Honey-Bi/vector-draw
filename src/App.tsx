@@ -15,6 +15,7 @@ import {
   SvgObject,
   SvgType,
   History,
+  Modal,
 } from "./types";
 import "./index.css";
 
@@ -41,20 +42,25 @@ export default function App() {
 
   const [svgList, setSvgList] = useState<SvgObject<SvgType>[]>([]);
 
+  const [Modal, setModal] = useState<Modal>({
+    Source: false,
+    Command: false,
+  });
+
   useEffect(() => {
-    console.log("----history 변경----");
+    console.log("---- history change ----");
     for (let i of history) {
       console.log(i);
     }
-    console.log("-------------------");
+    console.log("------------------------");
   }, [history]);
 
   useEffect(() => {
-    console.log("----svgList 변경----");
+    console.log("---- svgList change ----");
     for (let i of svgList) {
       console.log(i);
     }
-    console.log("-------------------");
+    console.log("------------------------");
   }, [svgList]);
 
   // 단축키 함수
@@ -67,43 +73,63 @@ export default function App() {
       // ctrl + shift + ?
       switch (key) {
         case "z": // redo
-          const tmp = tmpHistory.pop();
-          if (tmp === undefined) break;
-          if (tmp[0] === "create") {
-            let id = tmp[3]!.type + "-" + svgList.length;
-            tmp[3]!.id = id;
-            setHistory([...history, [tmp[0], tmp[1], svgList.length, tmp[3]!]]);
-            setSvgList([...svgList, tmp[3]!]);
-            setSelect(id);
-          }
+          Commands.redo();
           break;
       }
     } else if (e.ctrlKey) {
       // ctrl + ?
       switch (key) {
         case "z": // undo
-          const tmp = history.pop();
-          if (tmp === undefined) break;
-
-          setTmpHistory([...tmpHistory, tmp]);
-          setHistory([...history]);
-
-          if (tmp[0] === "create") {
-            if (tmp[1] !== "path") {
-              svgList.splice(tmp[2], 1);
-            }
-
-            if (history.length - 1 === -1) setSelect(null);
-            else setSelect(`${tmp[1]}-${history.length - 1}`);
-          }
+          Commands.undo();
+          break;
+        case "/":
+          setModal((prev) => ({ ...prev, Command: !prev.Command }));
           break;
       }
     } else if (e.shiftKey) {
       //shift + ?
       switch (key) {
       }
+    } else {
+      // 그냥 키입력
+      switch (key) {
+        case "escape":
+          // Modal창이 열려있으면
+          if (modalTrue()) setModal({ Source: false, Command: false });
+          break;
+      }
     }
   }
+
+  const Commands = {
+    undo: () => {
+      const tmp = history.pop();
+      if (tmp === undefined) return;
+
+      setTmpHistory([...tmpHistory, tmp]);
+      setHistory([...history]);
+
+      if (tmp[0] === "create") {
+        if (tmp[1] !== "path") {
+          svgList.splice(tmp[2], 1);
+        }
+
+        if (history.length - 1 === -1) setSelect(null);
+        else setSelect(`${tmp[1]}-${history.length - 1}`);
+      }
+    },
+    redo: () => {
+      const tmp = tmpHistory.pop();
+      if (tmp === undefined) return;
+      if (tmp[0] === "create") {
+        let id = tmp[3]!.type + "-" + svgList.length;
+        tmp[3]!.id = id;
+        setHistory([...history, [tmp[0], tmp[1], svgList.length, tmp[3]!]]);
+        setSvgList([...svgList, tmp[3]!]);
+        setSelect(id);
+      }
+    },
+  };
 
   //Tool 단축키
   function shortcutTool(e: React.KeyboardEvent) {
@@ -187,7 +213,6 @@ export default function App() {
   }
   return (
     <div tabIndex={0} onKeyDown={shortcuts} onKeyUp={keyUp}>
-      <Menu />
       <Menu
         setModal={setModal}
         commands={Commands}
@@ -210,6 +235,7 @@ export default function App() {
           canvasSize={canvasSize}
           svgList={svgList}
           setSvgList={setSvgList}
+          history={history}
           setHistory={setHistory}
           setTmpHistory={setTmpHistory}
         />
