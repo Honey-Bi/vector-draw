@@ -18,6 +18,7 @@ body {
   --bar-color: #393939;
   --tool-color: #068fff;
   --shorcut-color: #d8d8d8;
+  --command-color: #323339;
   --ruler-size: 1rem;
 }
 li {
@@ -45,6 +46,9 @@ ul {
     float: left;
     position: relative;
     cursor: default;
+    & > img {
+      height: 90%;
+    }
     &:first-child {
       margin-left: 2.5rem;
     }
@@ -76,12 +80,21 @@ ul {
       color: black;
       left: 0;
       padding: 0.25rem 0;
-      & > li {
+      & > li,
+      & > a {
+        color: black;
+        text-decoration: none;
+
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 0.5rem;
-        &:hover {
+
+        &.disabled {
+          cursor: not-allowed;
+          background-color: rgba(0, 0, 0, 0.2);
+        }
+        &:hover:not(.disabled) {
           cursor: pointer;
           background-color: rgba(0, 0, 0, 0.1);
         }
@@ -437,6 +450,115 @@ ul {
         -webkit-appearance: none;
         margin: 0;
       }
+    }
+  }
+}
+@keyframes open {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background-color: rgba(0, 0, 0, 0.25);
+  display: none;
+  &.open {
+    display: block;
+    animation: open 0.25s ease;
+  }
+}
+.command-dialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 10rem);
+  height: calc(100% - 10rem);
+  background-color: var(--command-color);
+  color: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  display: none;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px,
+    rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px,
+    rgba(0, 0, 0, 0.09) 0px -3px 5px;
+  &.open {
+    display: block;
+  }
+  .dialog {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    .title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .command-exit::after {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      display: inline-block;
+      content: "\00d7";
+      font-size: 2rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .multi {
+      -webkit-column-count: 2;
+      -moz-column-count: 2;
+      column-count: 2;
+      -webkit-column-gap: 1.5rem;
+      -moz-column-gap: 1.5rem;
+      column-gap: 1.5rem;
+      .dialog-scope {
+        display: inline-block;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--shorcut-color);
+        .sub-title {
+          margin-top: 1rem;
+          font-weight: bold;
+        }
+        .shortcut {
+          margin-top: 0.75rem;
+        }
+        & .btn-shortcut {
+          display: inline;
+          & + & {
+            margin-left: 0.5rem;
+          }
+        }
+        & + & {
+          padding-top: 1rem;
+        }
+      }
+    }
+    /* 992 이상 */
+    @media (min-width: 992px) {
+      .multi {
+        -webkit-column-count: 3;
+        -moz-column-count: 3;
+        column-count: 3;
+      }
+    }
+    &::-webkit-scrollbar {
+      width: 0.8rem;
+      height: 0.8rem;
+      padding: 0.1rem;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(255, 255, 255, 0.8);
+    }
+    &::-webkit-scrollbar-track {
+      background-color: rgba(255, 255, 255, 0.1);
     }
   }
 }
