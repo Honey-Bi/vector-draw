@@ -106,6 +106,70 @@ function Panel({
     setSvgList(updateList);
   }
 
+  // 세로 정렬 Top
+  function alignTop(index: number, type: SvgType) {
+    const updateList = [...svgList];
+    switch (type) {
+      case "line": {
+        let item = updateList[index] as SvgObject<typeof type>;
+        const min = Math.min(item.property.position1.y, item.property.position2.y);
+        item.property.position1.y -= min;
+        item.property.position2.y -= min;
+        break;
+      }
+      case "rect": {
+        break;
+      }
+      case "ellipse": {
+        break;
+      }
+    }
+    setSvgList(updateList);
+  }
+  // 세로 정렬 Middle
+  function alignMiddle(index: number, type: SvgType) {
+    const updateList = [...svgList];
+    switch (type) {
+      case "line": {
+        let item = updateList[index] as SvgObject<typeof type>;
+        const max = Math.max(item.property.position1.y, item.property.position2.y);
+        const min = Math.min(item.property.position1.y, item.property.position2.y);
+        const middle = (max - min) / 2 + min;
+        const distance = canvasSize.height / 2 - middle;
+        item.property.position1.y += distance;
+        item.property.position2.y += distance;
+      }
+    }
+    setSvgList(updateList);
+  }
+  // 세로 정렬 Bottom
+  function alignBottom(index: number, type: SvgType) {
+    const updateList = [...svgList];
+    switch (type) {
+      case "line": {
+        let item = updateList[index] as SvgObject<typeof type>;
+
+        break;
+      }
+    }
+    setSvgList(updateList);
+  }
+  // 가로 정렬 Left
+  function alignLeft(index: number, type: SvgType) {
+    const updateList = [...svgList];
+    setSvgList(updateList);
+  }
+  // 가로 정렬 Center
+  function alignCenter(index: number, type: SvgType) {
+    const updateList = [...svgList];
+    setSvgList(updateList);
+  }
+  // 가로 정렬 Right
+  function alignRight(index: number, type: SvgType) {
+    const updateList = [...svgList];
+    setSvgList(updateList);
+  }
+
   function renderProperty(index: number, type: SvgType): JSX.Element {
     let result = [];
     switch (type) {
@@ -149,7 +213,7 @@ function Panel({
                   type="number"
                   className="panel-input"
                   value={item.property.position2.y}
-                  onChange={(e) => handleObjectChange(e, index, type, "position1.y")}
+                  onChange={(e) => handleObjectChange(e, index, type, "position2.y")}
                 />
               </fieldset>
             </div>
@@ -275,15 +339,15 @@ function Panel({
           <div className="align">
             <fieldset className="vertical">
               <legend>vertical</legend>
-              <div className="top"></div>
-              <div className="middle"></div>
-              <div className="bottom"></div>
+              <div className="top" onClick={() => alignTop(index, type)} />
+              <div className="middle" onClick={() => alignMiddle(index, type)} />
+              <div className="bottom" onClick={() => alignBottom(index, type)} />
             </fieldset>
             <fieldset className="horizontal">
               <legend>horizontal</legend>
-              <div className="left"></div>
-              <div className="center"></div>
-              <div className="right"></div>
+              <div className="left" onClick={() => alignLeft(index, type)} />
+              <div className="center" onClick={() => alignCenter(index, type)} />
+              <div className="right" onClick={() => alignRight(index, type)} />
             </fieldset>
           </div>
         </div>
