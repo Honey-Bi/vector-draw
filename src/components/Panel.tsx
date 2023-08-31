@@ -1,5 +1,5 @@
 import React from "react";
-import { Select, Size, SvgObject, SvgType } from "../types";
+import { History, Select, Size, SvgObject, SvgType } from "../types";
 
 type Props = {
   select: Select;
@@ -7,8 +7,20 @@ type Props = {
   setCanvasSize: (e: Size) => void;
   svgList: SvgObject<SvgType>[];
   setSvgList: (e: SvgObject<SvgType>[]) => void;
+  history: History[];
+  setHistory: (e: History[]) => void;
+  setTmpHistory: (e: History[]) => void;
 };
-function Panel({ select, canvasSize, setCanvasSize, svgList, setSvgList }: Props) {
+function Panel({
+  select,
+  canvasSize,
+  setCanvasSize,
+  svgList,
+  setSvgList,
+  history,
+  setHistory,
+  setTmpHistory,
+}: Props) {
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.id === "height") {
       setCanvasSize({

@@ -1,10 +1,21 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import Menu from "./components/Menu";
 import Panel from "./components/Panel";
 import Tool from "./components/Tool";
 import Canvas from "./components/Canvas";
 
-import { Tools, Select, Palette, KeyBind, Size, SvgObject, SvgType } from "./types";
+import shortcut from "./shorcut.json";
+
+import {
+  Tools,
+  Select,
+  Palette,
+  KeyBind,
+  Size,
+  SvgObject,
+  SvgType,
+  History,
+} from "./types";
 import "./index.css";
 
 export default function App() {
@@ -25,9 +36,26 @@ export default function App() {
   });
 
   // undo, redo용 유저행동정보 저장용 상태
-  const timeline = useRef([]);
+  const [history, setHistory] = useState<History[]>([]);
+  const [tmpHistory, setTmpHistory] = useState<History[]>([]);
 
   const [svgList, setSvgList] = useState<SvgObject<SvgType>[]>([]);
+
+  useEffect(() => {
+    console.log("----history 변경----");
+    for (let i of history) {
+      console.log(i);
+    }
+    console.log("-------------------");
+  }, [history]);
+
+  useEffect(() => {
+    console.log("----svgList 변경----");
+    for (let i of svgList) {
+      console.log(i);
+    }
+    console.log("-------------------");
+  }, [svgList]);
 
   // 단축키 함수
   function shortcuts(e: React.KeyboardEvent) {
@@ -38,15 +66,36 @@ export default function App() {
     if (e.ctrlKey && e.shiftKey) {
       // ctrl + shift + ?
       switch (key) {
-        case "z":
-          console.log("redo");
+        case "z": // redo
+          const tmp = tmpHistory.pop();
+          if (tmp === undefined) break;
+          if (tmp[0] === "create") {
+            let id = tmp[3]!.type + "-" + svgList.length;
+            tmp[3]!.id = id;
+            setHistory([...history, [tmp[0], tmp[1], svgList.length, tmp[3]!]]);
+            setSvgList([...svgList, tmp[3]!]);
+            setSelect(id);
+          }
           break;
       }
     } else if (e.ctrlKey) {
       // ctrl + ?
       switch (key) {
-        case "z":
-          console.log("undo");
+        case "z": // undo
+          const tmp = history.pop();
+          if (tmp === undefined) break;
+
+          setTmpHistory([...tmpHistory, tmp]);
+          setHistory([...history]);
+
+          if (tmp[0] === "create") {
+            if (tmp[1] !== "path") {
+              svgList.splice(tmp[2], 1);
+            }
+
+            if (history.length - 1 === -1) setSelect(null);
+            else setSelect(`${tmp[1]}-${history.length - 1}`);
+          }
           break;
       }
     } else if (e.shiftKey) {
@@ -121,6 +170,8 @@ export default function App() {
           canvasSize={canvasSize}
           svgList={svgList}
           setSvgList={setSvgList}
+          setHistory={setHistory}
+          setTmpHistory={setTmpHistory}
         />
         <Panel
           select={select}
@@ -128,6 +179,9 @@ export default function App() {
           setCanvasSize={setCanvasSize}
           svgList={svgList}
           setSvgList={setSvgList}
+          history={history}
+          setHistory={setHistory}
+          setTmpHistory={setTmpHistory}
         />
       </div>
     </div>

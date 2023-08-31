@@ -9,6 +9,7 @@ import {
   Palette,
   SvgType,
   Color,
+  History,
 } from "../types";
 
 type Props = {
@@ -20,6 +21,9 @@ type Props = {
   palette: Palette;
   svgList: SvgObject<SvgType>[];
   setSvgList: (e: SvgObject<SvgType>[]) => void;
+  history: History[];
+  setHistory: (e: History[]) => void;
+  setTmpHistory: (e: History[]) => void;
 };
 
 const ErrorMsg = {
@@ -34,9 +38,12 @@ function Canvas({
   keyBind,
   shortcutTool,
   canvasSize,
-  svgList,
   palette,
+  svgList,
   setSvgList,
+  history,
+  setHistory,
+  setTmpHistory,
 }: Props) {
   const canvasRef = useRef<SVGSVGElement>(null);
   const [isMouseOn, setMouseOn] = useState<boolean>(false);
@@ -251,9 +258,40 @@ function Canvas({
 
   //마우스 클릭 종료 이벤트
   const MouseUpHandler = (e: React.MouseEvent) => {
+    if (!isMouseOn) return; // canvas 내에서 클릭을시작하지 않았다면 중지
     setMouseOn(false);
-    if (!["select", "zoom", "spoid"].includes(tool)) {
-      let last = svgList[svgList.length - 1];
+    let lastIndex = svgList.length - 1;
+    let lastSelect = true;
+    switch (tool) {
+      case "pencil":
+      case "line":
+      case "rect": {
+        setHistory([...history, ["create", tool, lastIndex, svgList[lastIndex]]]);
+        setTmpHistory([]);
+        break;
+      }
+      case "circle": {
+        setHistory([...history, ["create", "ellipse", lastIndex, svgList[lastIndex]]]);
+        setTmpHistory([]);
+        break;
+      }
+      case "shape": {
+        break;
+      }
+      case "path": {
+        break;
+      }
+      case "text": {
+        break;
+      }
+      case "select":
+      case "zoom":
+      case "spoid":
+        lastSelect = false;
+        break;
+    }
+    if (lastSelect) {
+      let last = svgList[lastIndex];
       setSelect(last.id);
     }
   };
@@ -443,7 +481,6 @@ function Canvas({
         onMouseUp={MouseUpHandler}
       >
         <div
-          id="Canvas"
           className="svg-canvas"
           style={{
             width: `${canvasSize.width * 1.1}px`,

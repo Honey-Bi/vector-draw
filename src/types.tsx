@@ -100,6 +100,9 @@ type SvgObject<T extends SvgType> = {
   property: Property<T>;
 };
 
+type LogType = "create" | "update" | "delete";
+type History = [LogType, SvgType, number, SvgObject<SvgType>?];
+
 export type {
   Tools,
   Position,
@@ -110,4 +113,5 @@ export type {
   KeyBind,
   SvgObject,
   Size,
+  History,
 };
