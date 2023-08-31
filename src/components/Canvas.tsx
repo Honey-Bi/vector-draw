@@ -135,7 +135,7 @@ function Canvas({
               stroke: palette.stroke,
               strokeWidth: palette.stroke ? 1 : 0,
               position: position,
-              radius: { x: 0, y: 0 },
+              radius: { rx: 0, ry: 0 },
             },
           } as SvgObject<"ellipse">;
           break;
@@ -228,17 +228,17 @@ function Canvas({
           const tmp = last as SvgObject<"ellipse">;
           if (position.x > cPosition.x) {
             // right
-            tmp.property.radius.x = (position.x - cPosition.x) / 2;
+            tmp.property.radius.rx = (position.x - cPosition.x) / 2;
           } else if (position.x < cPosition.x) {
             // left
-            tmp.property.radius.x = (cPosition.x - position.x) / 2;
+            tmp.property.radius.rx = (cPosition.x - position.x) / 2;
           }
           if (position.y > cPosition.y) {
             // bottom
-            tmp.property.radius.y = (position.y - cPosition.y) / 2;
+            tmp.property.radius.ry = (position.y - cPosition.y) / 2;
           } else {
             // top
-            tmp.property.radius.y = (cPosition.y - position.y) / 2;
+            tmp.property.radius.ry = (cPosition.y - position.y) / 2;
           }
 
           tmp.property.position.x = (position.x + cPosition.x) / 2;
@@ -377,8 +377,8 @@ function Canvas({
               id={index.id}
               cx={tmp.property.position.x}
               cy={tmp.property.position.y}
-              rx={tmp.property.radius.x}
-              ry={tmp.property.radius.y}
+              rx={tmp.property.radius.rx}
+              ry={tmp.property.radius.ry}
               strokeWidth={tmp.property.strokeWidth}
               fill={RGBtoHEX(tmp.property.fill)}
               stroke={RGBtoHEX(tmp.property.stroke)}

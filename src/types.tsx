@@ -11,6 +11,8 @@ type Tools =
   | "spoid";
 
 type Position = { x: number; y: number };
+type Radius = { rx: number; ry: number };
+
 type Size = { width: number; height: number };
 
 type Select = string | null;
@@ -56,7 +58,7 @@ type RectProperty = {
 };
 type EllipseProperty = {
   position: Position;
-  radius: Position;
+  radius: Radius;
   fill: Color;
   stroke: Color;
   strokeWidth: number;
