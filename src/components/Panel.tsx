@@ -6,7 +6,7 @@ type Props = {
   canvasSize: Size;
   setCanvasSize: (e: Size) => void;
   svgList: SvgObject<SvgType>[];
-  setSvgList: (e: SvgObject<SvgType>[]) => void;
+  setSvgList: (e: React.SetStateAction<SvgObject<SvgType>[]>) => void;
   history: History[];
   setHistory: (e: History[]) => void;
   setTmpHistory: (e: History[]) => void;
@@ -44,7 +44,7 @@ function Panel({
   // Name input 렌더링 함수
   function renderName(index: number): JSX.Element {
     return (
-      <div className="input-group">
+      <div className="input-group" key={index}>
         <label htmlFor="title">title</label>
         <input
           className="panel-input"
@@ -65,40 +65,45 @@ function Panel({
     property: string
   ) {
     const value = Number(e.target.value);
+    const updateList = [...svgList];
     switch (type) {
       case "line": {
-        let item = svgList[index] as SvgObject<typeof type>;
-        switch (property) {
-          case "positionX1":
-            item.property.position1.x = value;
-            break;
-          case "positionX2":
-            item.property.position2.x = value;
-            break;
-          case "positionY1":
-            item.property.position1.y = value;
-            break;
-          case "positionY2":
-            item.property.position2.y = value;
-            break;
-        }
+        let item = updateList[index] as SvgObject<typeof type>;
+        let split = property.split(".");
+        item.property[split[0] as "position1" | "position2"][split[1] as "x" | "y"] =
+          value;
         break;
       }
       case "rect": {
-        let item = svgList[index] as SvgObject<typeof type>;
+        let item = updateList[index] as SvgObject<typeof type>;
         switch (property) {
           case "width":
           case "height":
             item.property.size[property] = value;
             break;
+          case "x":
+          case "y":
+            item.property.position[property] = value;
+            break;
         }
         break;
       }
       case "ellipse": {
-        // let item = svgList.current[index] as SvgObject<typeof type>;
+        let item = updateList[index] as SvgObject<typeof type>;
+        switch (property) {
+          case "rx":
+          case "ry":
+            item.property.radius[property] = value;
+            break;
+          case "x":
+          case "y":
+            item.property.position[property] = value;
+            break;
+        }
         break;
       }
     }
+    setSvgList(updateList);
   }
 
   function renderProperty(index: number, type: SvgType): JSX.Element {
@@ -107,7 +112,7 @@ function Panel({
       case "line": {
         let item = svgList[index] as SvgObject<typeof type>;
         result.push(
-          <div key={index}>
+          <div key={type}>
             <div className="row">
               <fieldset className="input-group">
                 <legend>x1</legend>
@@ -115,7 +120,7 @@ function Panel({
                   type="number"
                   className="panel-input"
                   value={item.property.position1.x}
-                  onChange={(e) => handleObjectChange(e, index, type, "positionX1")}
+                  onChange={(e) => handleObjectChange(e, index, type, "position1.x")}
                 />
               </fieldset>
               <fieldset className="input-group">
@@ -124,7 +129,7 @@ function Panel({
                   type="number"
                   className="panel-input"
                   value={item.property.position1.y}
-                  onChange={(e) => handleObjectChange(e, index, type, "positionY1")}
+                  onChange={(e) => handleObjectChange(e, index, type, "position1.y")}
                 />
               </fieldset>
             </div>
@@ -135,7 +140,7 @@ function Panel({
                   type="number"
                   className="panel-input"
                   value={item.property.position2.x}
-                  onChange={(e) => handleObjectChange(e, index, type, "positionX2")}
+                  onChange={(e) => handleObjectChange(e, index, type, "position2.x")}
                 />
               </fieldset>
               <fieldset className="input-group">
@@ -144,7 +149,7 @@ function Panel({
                   type="number"
                   className="panel-input"
                   value={item.property.position2.y}
-                  onChange={(e) => handleObjectChange(e, index, type, "positionY2")}
+                  onChange={(e) => handleObjectChange(e, index, type, "position1.y")}
                 />
               </fieldset>
             </div>
@@ -155,8 +160,9 @@ function Panel({
       case "rect": {
         let item = svgList[index] as SvgObject<typeof type>;
         result.push(
-          <>
-            <div className="row" key={index}>
+          <div key={type}>
+            {/* Size */}
+            <div className="row">
               <fieldset className="input-group">
                 <legend>width</legend>
                 <input
@@ -176,11 +182,77 @@ function Panel({
                 />
               </fieldset>
             </div>
-          </>
+            {/* Position */}
+            <div className="row">
+              <fieldset className="input-group">
+                <legend>x</legend>
+                <input
+                  type="number"
+                  className="panel-input"
+                  value={item.property.position.x}
+                  onChange={(e) => handleObjectChange(e, index, type, "x")}
+                />
+              </fieldset>
+              <fieldset className="input-group">
+                <legend>y</legend>
+                <input
+                  type="number"
+                  className="panel-input"
+                  value={item.property.position.y}
+                  onChange={(e) => handleObjectChange(e, index, type, "y")}
+                />
+              </fieldset>
+            </div>
+          </div>
         );
         break;
       }
       case "ellipse": {
+        let item = svgList[index] as SvgObject<typeof type>;
+        result.push(
+          <div key={type}>
+            <div className="row">
+              <fieldset className="inpu-group">
+                <legend>rx</legend>
+                <input
+                  type="number"
+                  className="panel-input"
+                  value={item.property.radius.rx}
+                  onChange={(e) => handleObjectChange(e, index, type, "rx")}
+                />
+              </fieldset>
+              <fieldset className="inpu-group">
+                <legend>ry</legend>
+                <input
+                  type="number"
+                  className="panel-input"
+                  value={item.property.radius.ry}
+                  onChange={(e) => handleObjectChange(e, index, type, "ry")}
+                />
+              </fieldset>
+            </div>
+            <div className="row">
+              <fieldset className="inpu-group">
+                <legend>x</legend>
+                <input
+                  type="number"
+                  className="panel-input"
+                  value={item.property.position.x}
+                  onChange={(e) => handleObjectChange(e, index, type, "x")}
+                />
+              </fieldset>
+              <fieldset className="inpu-group">
+                <legend>y</legend>
+                <input
+                  type="number"
+                  className="panel-input"
+                  value={item.property.position.y}
+                  onChange={(e) => handleObjectChange(e, index, type, "y")}
+                />
+              </fieldset>
+            </div>
+          </div>
+        );
         break;
       }
     }
