@@ -316,9 +316,8 @@ function Canvas({
         case "pencil": /* complete */ {
           const tmp = index as SvgObject<typeof index.type>;
           let d = "";
-          for (let i of tmp.property.path) {
-            d += " " + Object.values(i).join(" ");
-          }
+          for (let i of tmp.property.path) d += " " + Object.values(i).join(" ");
+
           result.push(
             <path
               className={index.title}
@@ -459,27 +458,23 @@ function Canvas({
 
   // RGB 값 HEX로 변경 null 이면 "none" 반환
   function RGBtoHEX(color: Color): string {
-    let result = "#";
-    if (color) {
-      for (let i of Object.values(color)) result += i.toString(16);
-      return result;
-    }
+    if (color) return `rgb(${color.r}, ${color.g}, ${color.b})`;
     return "none";
   }
 
+  function fitScreen() {
+    if (canvasRef.current) {
+      const big = document.getElementsByClassName("canvas")[0].getBoundingClientRect();
+      let big_min = Math.min(big.width, big.height);
+      let small_max = Math.max(canvasSize.width * 1.1, canvasSize.height * 1.1);
+      setZoom((big_min * 100) / small_max / 100);
+    }
+  }
+
   function shorcutZoom(e: React.KeyboardEvent) {
-    if (e.ctrlKey && e.key === "1") {
-      setZoom(1);
-    }
-    if (e.ctrlKey && e.key === "0") {
-      if (canvasRef.current) {
-        const big = document.getElementsByClassName("canvas")[0].getBoundingClientRect();
-        const small = canvasRef.current.getBoundingClientRect();
-        let big_min = Math.min(big.width, big.height);
-        let small_max = Math.max(small.width, small.height);
-        setZoom((big_min * 100) / small_max / 100);
-      }
-    }
+    if (e.ctrlKey && e.key === "1") setZoom(1);
+
+    if (e.ctrlKey && e.key === "0") fitScreen();
   }
   function handleKeyDown(e: React.KeyboardEvent) {
     shortcutTool(e);
