@@ -1,12 +1,18 @@
-import {
-  BaseSyntheticEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { BaseSyntheticEvent, useCallback, useEffect, useRef, useState } from "react";
+import { Modal } from "../types";
 
-export default function Menu() {
+type Props = {
+  setModal: (value: React.SetStateAction<Modal>) => void;
+  commands: {
+    undo: () => void;
+    redo: () => void;
+  };
+  history: {
+    history: number;
+    tmpHistory: number;
+  };
+};
+export default function Menu({ setModal, commands, history }: Props) {
   const menuRef = useRef<HTMLUListElement>(null); // 메뉴창 ref
   const [active, setActive] = useState<number>(-1); // 몇번째가 열려있는지
 
@@ -53,8 +59,14 @@ export default function Menu() {
       <li onClick={(e) => open(e, 0)}>
         logo
         <ul className="menu-list">
-          <li>About</li>
-          <li>
+          <a
+            href="https://github.com/Honey-Bi/vector-draw"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <li>About</li>
+          </a>
+          <li onClick={() => setModal((prev) => ({ ...prev, Command: true }))}>
             Keyboard Shortcut <div className="shortcut">Ctrl + /</div>
           </li>
         </ul>
@@ -69,10 +81,16 @@ export default function Menu() {
       <li onClick={(e) => open(e, 2)}>
         Edit
         <ul className="menu-list">
-          <li>
+          <li
+            onClick={history.history ? commands.undo : undefined}
+            className={`${history.history ? "" : "disabled"}`}
+          >
             Undo <div className="shortcut">Ctrl + Z</div>
           </li>
-          <li>
+          <li
+            onClick={history.tmpHistory ? commands.redo : undefined}
+            className={`${history.tmpHistory ? "" : "disabled"}`}
+          >
             Redo
             <div className="shortcut">
               Ctrl + <Shift /> + Z
