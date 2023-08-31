@@ -272,6 +272,20 @@ function Panel({
           <div className="select">{type}</div>
           {name}
           {property}
+          <div className="align">
+            <fieldset className="vertical">
+              <legend>vertical</legend>
+              <div className="top"></div>
+              <div className="middle"></div>
+              <div className="bottom"></div>
+            </fieldset>
+            <fieldset className="horizontal">
+              <legend>horizontal</legend>
+              <div className="left"></div>
+              <div className="center"></div>
+              <div className="right"></div>
+            </fieldset>
+          </div>
         </div>
       );
     } else {
