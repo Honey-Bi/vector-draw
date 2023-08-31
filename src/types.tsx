@@ -103,6 +103,11 @@ type SvgObject<T extends SvgType> = {
 type LogType = "create" | "update" | "delete";
 type History = [LogType, SvgType, number, SvgObject<SvgType>?];
 
+type Modal = {
+  Source: boolean;
+  Command: boolean;
+};
+
 export type {
   Tools,
   Position,
@@ -114,4 +119,5 @@ export type {
   SvgObject,
   Size,
   History,
+  Modal,
 };
