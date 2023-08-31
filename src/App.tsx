@@ -150,9 +150,49 @@ export default function App() {
     if (e.key === "Alt") setBindKey((prev) => ({ ...prev, alt: false }));
   }
 
+  // Modal 창이 열려있으면 True
+  function modalTrue(): boolean {
+    for (let i of Object.values(Modal)) if (i) return true;
+    return false;
+  }
+
+  function renderShorcut(): JSX.Element {
+    let result = [];
+    for (const [key, value] of Object.entries(shortcut)) {
+      let shortcutKey = [];
+      for (let i of value) {
+        let keys = [];
+        for (let j of i.key)
+          keys.push(
+            <div className="btn-shortcut" key={j}>
+              {j}
+            </div>
+          );
+        shortcutKey.push(
+          <div className="shortcut" key={i.explain}>
+            <div className="explain">{i.explain}</div>
+            {keys}
+          </div>
+        );
+      }
+
+      result.push(
+        <div className="dialog-scope" key={key}>
+          <div className="sub-title">{key}</div>
+          {shortcutKey}
+        </div>
+      );
+    }
+    return <>{result}</>;
+  }
   return (
     <div tabIndex={0} onKeyDown={shortcuts} onKeyUp={keyUp}>
       <Menu />
+      <Menu
+        setModal={setModal}
+        commands={Commands}
+        history={{ history: history.length, tmpHistory: tmpHistory.length }}
+      />
       <div className="width-fill">
         <Tool
           tool={tool}
@@ -183,6 +223,18 @@ export default function App() {
           setHistory={setHistory}
           setTmpHistory={setTmpHistory}
         />
+      </div>
+      <div className={`modal ${modalTrue() ? "open" : ""}`}>
+        <div className={`command-dialog ${Modal.Command ? "open" : ""}`}>
+          <div className="dialog">
+            <div className="title">KeyBoard Shortcut</div>
+            <span
+              className="command-exit"
+              onClick={() => setModal((prev) => ({ ...prev, Command: false }))}
+            ></span>
+            <div className="multi">{renderShorcut()}</div>
+          </div>
+        </div>
       </div>
     </div>
   );
