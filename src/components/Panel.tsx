@@ -106,18 +106,24 @@ function Panel({
     setSvgList(updateList);
   }
 
-  // 세로 정렬 Top
-  function alignTop(index: number, type: SvgType) {
+  type align = "vertical" | "horizontal";
+
+  // 시작 정렬
+  function alignStart(index: number, type: SvgType, align: align) {
     const updateList = [...svgList];
+    const [xy, size]: ["x" | "y", "width" | "height"] =
+      align === "horizontal" ? ["x", "width"] : ["y", "height"];
     switch (type) {
       case "line": {
         let item = updateList[index] as SvgObject<typeof type>;
-        const min = Math.min(item.property.position1.y, item.property.position2.y);
-        item.property.position1.y -= min;
-        item.property.position2.y -= min;
+        const min = Math.min(item.property.position1[xy], item.property.position2[xy]);
+        item.property.position1[xy] -= min;
+        item.property.position2[xy] -= min;
         break;
       }
       case "rect": {
+        let item = updateList[index] as SvgObject<typeof type>;
+        item.property.position[xy] = 0;
         break;
       }
       case "ellipse": {
@@ -126,47 +132,49 @@ function Panel({
     }
     setSvgList(updateList);
   }
-  // 세로 정렬 Middle
-  function alignMiddle(index: number, type: SvgType) {
+  // 중앙 정렬
+  function alignCenter(index: number, type: SvgType, align: align) {
     const updateList = [...svgList];
+    const [xy, size]: ["x" | "y", "width" | "height"] =
+      align === "horizontal" ? ["x", "width"] : ["y", "height"];
     switch (type) {
       case "line": {
         let item = updateList[index] as SvgObject<typeof type>;
-        const max = Math.max(item.property.position1.y, item.property.position2.y);
-        const min = Math.min(item.property.position1.y, item.property.position2.y);
+        const max = Math.max(item.property.position1[xy], item.property.position2[xy]);
+        const min = Math.min(item.property.position1[xy], item.property.position2[xy]);
         const middle = (max - min) / 2 + min;
-        const distance = canvasSize.height / 2 - middle;
-        item.property.position1.y += distance;
-        item.property.position2.y += distance;
+        item.property.position1[xy] += canvasSize.height / 2 - middle;
+        item.property.position2[xy] += canvasSize.height / 2 - middle;
+        break;
       }
-    }
-    setSvgList(updateList);
-  }
-  // 세로 정렬 Bottom
-  function alignBottom(index: number, type: SvgType) {
-    const updateList = [...svgList];
-    switch (type) {
-      case "line": {
+      case "rect": {
         let item = updateList[index] as SvgObject<typeof type>;
-
+        item.property.position[xy] = canvasSize[size] / 2 - item.property.size[size] / 2;
         break;
       }
     }
     setSvgList(updateList);
   }
-  // 가로 정렬 Left
-  function alignLeft(index: number, type: SvgType) {
+
+  // 끝부분 정렬
+  function alignEnd(index: number, type: SvgType, align: align) {
     const updateList = [...svgList];
-    setSvgList(updateList);
-  }
-  // 가로 정렬 Center
-  function alignCenter(index: number, type: SvgType) {
-    const updateList = [...svgList];
-    setSvgList(updateList);
-  }
-  // 가로 정렬 Right
-  function alignRight(index: number, type: SvgType) {
-    const updateList = [...svgList];
+    const [xy, size]: ["x" | "y", "width" | "height"] =
+      align === "horizontal" ? ["x", "width"] : ["y", "height"];
+    switch (type) {
+      case "line": {
+        let item = updateList[index] as SvgObject<typeof type>;
+        const max = Math.max(item.property.position1[xy], item.property.position2[xy]);
+        item.property.position1[xy] -= max - canvasSize[size];
+        item.property.position2[xy] -= max - canvasSize[size];
+        break;
+      }
+      case "rect": {
+        let item = updateList[index] as SvgObject<typeof type>;
+        item.property.position[xy] = canvasSize[size] - item.property.size[size];
+        break;
+      }
+    }
     setSvgList(updateList);
   }
 
@@ -339,15 +347,27 @@ function Panel({
           <div className="align">
             <fieldset className="vertical">
               <legend>vertical</legend>
-              <div className="top" onClick={() => alignTop(index, type)} />
-              <div className="middle" onClick={() => alignMiddle(index, type)} />
-              <div className="bottom" onClick={() => alignBottom(index, type)} />
+              <div className="top" onClick={() => alignStart(index, type, "vertical")} />
+              <div
+                className="middle"
+                onClick={() => alignCenter(index, type, "vertical")}
+              />
+              <div className="bottom" onClick={() => alignEnd(index, type, "vertical")} />
             </fieldset>
             <fieldset className="horizontal">
               <legend>horizontal</legend>
-              <div className="left" onClick={() => alignLeft(index, type)} />
-              <div className="center" onClick={() => alignCenter(index, type)} />
-              <div className="right" onClick={() => alignRight(index, type)} />
+              <div
+                className="left"
+                onClick={() => alignStart(index, type, "horizontal")}
+              />
+              <div
+                className="center"
+                onClick={() => alignCenter(index, type, "horizontal")}
+              />
+              <div
+                className="right"
+                onClick={() => alignEnd(index, type, "horizontal")}
+              />
             </fieldset>
           </div>
         </div>
