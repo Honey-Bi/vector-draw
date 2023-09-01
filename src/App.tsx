@@ -63,6 +63,22 @@ export default function App() {
     console.log("------------------------");
   }, [svgList]);
 
+  // const [tmpSelect, setTmpSelect] = useState<Select>(select);
+
+  // useEffect(() => {
+  //   setTmpSelect(select);
+  //   if (select) {
+  //     const element = document.getElementById(select) as HTMLElement;
+  //     element.
+  //   }
+  // }, [select]);
+
+  // useEffect(() => {
+  //   if (tmpSelect) {
+
+  //   }
+  // }, [tmpSelect]);
+
   // 단축키 함수
   function shortcuts(e: React.KeyboardEvent) {
     const key = e.key.toLocaleLowerCase();
@@ -106,17 +122,17 @@ export default function App() {
       const tmp = history.pop();
       if (tmp === undefined) return;
 
-      setTmpHistory([...tmpHistory, tmp]);
-      setHistory([...history]);
-
       if (tmp[0] === "create") {
         if (tmp[1] !== "path") {
           svgList.splice(tmp[2], 1);
         }
 
-        if (history.length - 1 === -1) setSelect(null);
-        else setSelect(`${tmp[1]}-${history.length - 1}`);
+        const hl = history.length - 1;
+        if (hl === -1) setSelect(null);
+        else setSelect(`${history[hl][1]}-${hl}`);
       }
+      setTmpHistory([...tmpHistory, tmp]);
+      setHistory([...history]);
     },
     redo: () => {
       const tmp = tmpHistory.pop();
@@ -182,35 +198,28 @@ export default function App() {
     return false;
   }
 
-  function renderShorcut(): JSX.Element {
-    let result = [];
-    for (const [key, value] of Object.entries(shortcut)) {
-      let shortcutKey = [];
-      for (let i of value) {
-        let keys = [];
-        for (let j of i.key)
-          keys.push(
-            <div className="btn-shortcut" key={j}>
-              {j}
-            </div>
-          );
-        shortcutKey.push(
-          <div className="shortcut" key={i.explain}>
-            <div className="explain">{i.explain}</div>
-            {keys}
+  function renderShortcut(): JSX.Element {
+    return (
+      <>
+        {Object.entries(shortcut).map(([key, value]) => (
+          <div className="dialog-scope" key={key}>
+            <div className="sub-title">{key}</div>
+            {value.map((item) => (
+              <div className="shortcut" key={item.explain}>
+                <div className="explain">{item.explain}</div>
+                {item.key.map((key) => (
+                  <div className="btn-shortcut" key={key}>
+                    {key}
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
-        );
-      }
-
-      result.push(
-        <div className="dialog-scope" key={key}>
-          <div className="sub-title">{key}</div>
-          {shortcutKey}
-        </div>
-      );
-    }
-    return <>{result}</>;
+        ))}
+      </>
+    );
   }
+
   return (
     <div tabIndex={0} onKeyDown={shortcuts} onKeyUp={keyUp}>
       <Menu
@@ -228,6 +237,7 @@ export default function App() {
         />
         <Canvas
           tool={tool}
+          select={select}
           setSelect={setSelect}
           keyBind={bindKey}
           palette={palette}
@@ -258,7 +268,7 @@ export default function App() {
               className="command-exit"
               onClick={() => setModal((prev) => ({ ...prev, Command: false }))}
             ></span>
-            <div className="multi">{renderShorcut()}</div>
+            <div className="multi">{renderShortcut()}</div>
           </div>
         </div>
       </div>

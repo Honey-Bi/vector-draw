@@ -4,7 +4,7 @@ import { History, Select, Size, SvgObject, SvgType } from "../types";
 type Props = {
   select: Select;
   canvasSize: Size;
-  setCanvasSize: (e: Size) => void;
+  setCanvasSize: (e: React.SetStateAction<Size>) => void;
   svgList: SvgObject<SvgType>[];
   setSvgList: (e: React.SetStateAction<SvgObject<SvgType>[]>) => void;
   history: History[];
@@ -23,16 +23,9 @@ function Panel({
 }: Props) {
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.id === "height") {
-      setCanvasSize({
-        width: canvasSize.width,
-        height: Number(e.target.value),
-      });
-    }
-    if (e.target.id === "width") {
-      setCanvasSize({
-        width: Number(e.target.value),
-        height: canvasSize.height,
-      });
+      setCanvasSize((prev) => ({ ...prev, height: Number(e.target.value) }));
+    } else if (e.target.id === "width") {
+      setCanvasSize((prev) => ({ ...prev, width: Number(e.target.value) }));
     }
   }
 
@@ -106,76 +99,64 @@ function Panel({
     setSvgList(updateList);
   }
 
-  type align = "vertical" | "horizontal";
-
-  // 시작 정렬
-  function alignStart(index: number, type: SvgType, align: align) {
+  function alignShapes(
+    index: number,
+    type: SvgType,
+    align: "vertical" | "horizontal",
+    alignment: "start" | "center" | "end"
+  ) {
     const updateList = [...svgList];
     const [xy, size]: ["x" | "y", "width" | "height"] =
       align === "horizontal" ? ["x", "width"] : ["y", "height"];
+
     switch (type) {
       case "line": {
         let item = updateList[index] as SvgObject<typeof type>;
         const min = Math.min(item.property.position1[xy], item.property.position2[xy]);
-        item.property.position1[xy] -= min;
-        item.property.position2[xy] -= min;
+        const max = Math.max(item.property.position1[xy], item.property.position2[xy]);
+
+        if (alignment === "start") {
+          item.property.position1[xy] -= min;
+          item.property.position2[xy] -= min;
+        } else if (alignment === "center") {
+          const middle = (max - min) / 2 + min;
+          item.property.position1[xy] += canvasSize.height / 2 - middle;
+          item.property.position2[xy] += canvasSize.height / 2 - middle;
+        } else {
+          item.property.position1[xy] -= max - canvasSize[size];
+          item.property.position2[xy] -= max - canvasSize[size];
+        }
         break;
       }
       case "rect": {
         let item = updateList[index] as SvgObject<typeof type>;
-        item.property.position[xy] = 0;
+        if (alignment === "start") {
+          item.property.position[xy] = 0;
+        }
+        if (alignment === "center") {
+          item.property.position[xy] =
+            canvasSize[size] / 2 - item.property.size[size] / 2;
+        } else {
+          item.property.position[xy] = canvasSize[size] - item.property.size[size];
+        }
         break;
       }
       case "ellipse": {
+        let item = updateList[index] as SvgObject<typeof type>;
+        const rxy = align === "horizontal" ? "rx" : "ry";
+        if (alignment === "start") {
+          item.property.position[xy] = item.property.radius[rxy];
+        } else if (alignment === "center") {
+          item.property.position[xy] = canvasSize[size] / 2;
+        } else {
+          item.property.position[xy] = canvasSize[size] - item.property.radius[rxy];
+        }
         break;
       }
     }
-    setSvgList(updateList);
-  }
-  // 중앙 정렬
-  function alignCenter(index: number, type: SvgType, align: align) {
-    const updateList = [...svgList];
-    const [xy, size]: ["x" | "y", "width" | "height"] =
-      align === "horizontal" ? ["x", "width"] : ["y", "height"];
-    switch (type) {
-      case "line": {
-        let item = updateList[index] as SvgObject<typeof type>;
-        const max = Math.max(item.property.position1[xy], item.property.position2[xy]);
-        const min = Math.min(item.property.position1[xy], item.property.position2[xy]);
-        const middle = (max - min) / 2 + min;
-        item.property.position1[xy] += canvasSize.height / 2 - middle;
-        item.property.position2[xy] += canvasSize.height / 2 - middle;
-        break;
-      }
-      case "rect": {
-        let item = updateList[index] as SvgObject<typeof type>;
-        item.property.position[xy] = canvasSize[size] / 2 - item.property.size[size] / 2;
-        break;
-      }
-    }
-    setSvgList(updateList);
-  }
 
-  // 끝부분 정렬
-  function alignEnd(index: number, type: SvgType, align: align) {
-    const updateList = [...svgList];
-    const [xy, size]: ["x" | "y", "width" | "height"] =
-      align === "horizontal" ? ["x", "width"] : ["y", "height"];
-    switch (type) {
-      case "line": {
-        let item = updateList[index] as SvgObject<typeof type>;
-        const max = Math.max(item.property.position1[xy], item.property.position2[xy]);
-        item.property.position1[xy] -= max - canvasSize[size];
-        item.property.position2[xy] -= max - canvasSize[size];
-        break;
-      }
-      case "rect": {
-        let item = updateList[index] as SvgObject<typeof type>;
-        item.property.position[xy] = canvasSize[size] - item.property.size[size];
-        break;
-      }
-    }
     setSvgList(updateList);
+    setTmpHistory([]);
   }
 
   function renderProperty(index: number, type: SvgType): JSX.Element {
@@ -284,7 +265,7 @@ function Panel({
         result.push(
           <div key={type}>
             <div className="row">
-              <fieldset className="inpu-group">
+              <fieldset className="input-group">
                 <legend>rx</legend>
                 <input
                   type="number"
@@ -293,7 +274,7 @@ function Panel({
                   onChange={(e) => handleObjectChange(e, index, type, "rx")}
                 />
               </fieldset>
-              <fieldset className="inpu-group">
+              <fieldset className="input-group">
                 <legend>ry</legend>
                 <input
                   type="number"
@@ -304,7 +285,7 @@ function Panel({
               </fieldset>
             </div>
             <div className="row">
-              <fieldset className="inpu-group">
+              <fieldset className="input-group">
                 <legend>x</legend>
                 <input
                   type="number"
@@ -313,7 +294,7 @@ function Panel({
                   onChange={(e) => handleObjectChange(e, index, type, "x")}
                 />
               </fieldset>
-              <fieldset className="inpu-group">
+              <fieldset className="input-group">
                 <legend>y</legend>
                 <input
                   type="number"
@@ -347,26 +328,32 @@ function Panel({
           <div className="align">
             <fieldset className="vertical">
               <legend>vertical</legend>
-              <div className="top" onClick={() => alignStart(index, type, "vertical")} />
+              <div
+                className="top"
+                onClick={() => alignShapes(index, type, "vertical", "start")}
+              />
               <div
                 className="middle"
-                onClick={() => alignCenter(index, type, "vertical")}
+                onClick={() => alignShapes(index, type, "vertical", "center")}
               />
-              <div className="bottom" onClick={() => alignEnd(index, type, "vertical")} />
+              <div
+                className="bottom"
+                onClick={() => alignShapes(index, type, "vertical", "end")}
+              />
             </fieldset>
             <fieldset className="horizontal">
               <legend>horizontal</legend>
               <div
                 className="left"
-                onClick={() => alignStart(index, type, "horizontal")}
+                onClick={() => alignShapes(index, type, "horizontal", "start")}
               />
               <div
                 className="center"
-                onClick={() => alignCenter(index, type, "horizontal")}
+                onClick={() => alignShapes(index, type, "horizontal", "center")}
               />
               <div
                 className="right"
-                onClick={() => alignEnd(index, type, "horizontal")}
+                onClick={() => alignShapes(index, type, "horizontal", "end")}
               />
             </fieldset>
           </div>

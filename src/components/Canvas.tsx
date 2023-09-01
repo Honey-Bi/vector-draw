@@ -14,6 +14,7 @@ import {
 
 type Props = {
   tool: Tools;
+  select: Select;
   setSelect: (select: Select) => void;
   keyBind: KeyBind;
   shortcutTool: (e: React.KeyboardEvent) => void;
@@ -34,6 +35,7 @@ const ErrorMsg = {
 
 function Canvas({
   tool,
+  select,
   setSelect,
   keyBind,
   shortcutTool,
@@ -56,6 +58,7 @@ function Canvas({
   // 마우스 클릭 이벤트
   const MouseOnHandler = (e: React.MouseEvent) => {
     if (canvasRef.current && e.button === 0) {
+      if (isMouseOn) return; // 마우스가 정상적으로 종료되지 않았을시 새실행 방지
       setMouseOn(true);
       const position = getPosition(e.pageX, e.pageY);
       setCPosition(getPosition(e.pageX, e.pageY));
@@ -70,7 +73,7 @@ function Canvas({
             setSelect(null);
           }
           return;
-        case "pencil": // complete
+        case "pencil":
           if (palette.stroke === null) {
             result = ErrorMsg["strokeNull"];
             break;
@@ -86,7 +89,7 @@ function Canvas({
             },
           } as SvgObject<"pencil">;
           break;
-        case "line": // complete
+        case "line":
           if (palette.stroke === null) {
             result = ErrorMsg["strokeNull"];
             break;
@@ -103,7 +106,7 @@ function Canvas({
             },
           } as SvgObject<"line">;
           break;
-        case "rect": // complete
+        case "rect":
           if (palette.fill === null && palette.stroke === null) {
             result = ErrorMsg["fillStrokeNull"];
             break;
@@ -112,6 +115,8 @@ function Canvas({
             id: `${tool}-${id}`,
             title: tool,
             type: "rect",
+            position: { x: 0, y: 0 },
+            size: { width: 0, height: 0 },
             property: {
               fill: palette.fill,
               stroke: palette.stroke,
@@ -121,7 +126,7 @@ function Canvas({
             },
           } as SvgObject<"rect">;
           break;
-        case "circle": // complete
+        case "circle":
           if (palette.fill === null && palette.stroke === null) {
             result = ErrorMsg["fillStrokeNull"];
             break;
@@ -167,7 +172,7 @@ function Canvas({
             },
           } as SvgObject<"text">;
           break;
-        case "zoom": // complete
+        case "zoom":
           zoomIO();
           return;
         case "spoid":
@@ -308,9 +313,51 @@ function Canvas({
     }
   }
 
+  function renderRect(id: string, position: Position, size: Size) {
+    let add = [];
+    const activeRectSize = 5;
+    if (select && select === id) {
+      add.push(
+        <g fill="white" stroke="black">
+          <rect
+            strokeWidth={1}
+            width={activeRectSize}
+            height={activeRectSize}
+            x={position.x - activeRectSize / 2}
+            y={position.y - activeRectSize / 2}
+          />
+          {/* 7 */}
+          <rect width={activeRectSize} height={activeRectSize} /> {/* 8 */}
+          <rect width={activeRectSize} height={activeRectSize} /> {/* 9 */}
+          <rect width={activeRectSize} height={activeRectSize} /> {/* 4 */}
+          <rect width={activeRectSize} height={activeRectSize} /> {/* 6 */}
+          <rect width={activeRectSize} height={activeRectSize} /> {/* 1 */}
+          <rect width={activeRectSize} height={activeRectSize} /> {/* 2 */}
+          <rect width={activeRectSize} height={activeRectSize} /> {/* 3 */}
+        </g>
+      );
+    }
+    return (
+      <>
+        <rect
+          id={id}
+          x={position.x}
+          y={position.y}
+          width={size.width}
+          height={size.height}
+          fill="transparent"
+          strokeWidth={1}
+          {...(select ? (select === id ? { stroke: "#6fbeff" } : "") : "")}
+        />
+        {add}
+      </>
+    );
+  }
   // SVG Object list 랜더링 함수
   function renderSvgObject(): JSX.Element {
     let result = [];
+    let rectPosition: Position;
+    let rectSize: Size;
     for (let index of svgList) {
       switch (index.type) {
         case "pencil": /* complete */ {
@@ -320,7 +367,6 @@ function Canvas({
 
           result.push(
             <path
-              className={index.title}
               key={index.id}
               id={index.id}
               strokeWidth={tmp.property.strokeWidth}
@@ -333,55 +379,75 @@ function Canvas({
         }
         case "line": /* complete */ {
           const tmp = index as SvgObject<typeof index.type>;
+          const minX = Math.min(tmp.property.position1.x, tmp.property.position2.x);
+          const maxX = Math.max(tmp.property.position1.x, tmp.property.position2.x);
+          const minY = Math.min(tmp.property.position1.y, tmp.property.position2.y);
+          const maxY = Math.max(tmp.property.position1.y, tmp.property.position2.y);
+          rectPosition = { x: minX, y: minY };
+          rectSize = { width: maxX - minX, height: maxY - minY };
           result.push(
-            <line
-              className={index.title}
-              key={index.id}
-              id={index.id}
-              x1={tmp.property.position1.x}
-              y1={tmp.property.position1.y}
-              x2={tmp.property.position2.x}
-              y2={tmp.property.position2.y}
-              strokeWidth={tmp.property.strokeWidth}
-              stroke={RGBtoHEX(tmp.property.stroke)}
-            />
+            <g key={index.id}>
+              <line
+                id={index.id}
+                x1={tmp.property.position1.x}
+                y1={tmp.property.position1.y}
+                x2={tmp.property.position2.x}
+                y2={tmp.property.position2.y}
+                strokeWidth={tmp.property.strokeWidth}
+                stroke={RGBtoHEX(tmp.property.stroke)}
+              />
+              {renderRect(index.id, rectPosition, rectSize)}
+            </g>
           );
 
           break;
         }
         case "rect": /* complete */ {
           const tmp = index as SvgObject<typeof index.type>;
+          rectPosition = tmp.property.position;
+          rectSize = tmp.property.size;
           result.push(
-            <rect
-              className={index.title}
-              key={index.id}
-              id={index.id}
-              x={tmp.property.position.x}
-              y={tmp.property.position.y}
-              width={tmp.property.size.width}
-              height={tmp.property.size.height}
-              fill={RGBtoHEX(tmp.property.fill)}
-              stroke={RGBtoHEX(tmp.property.stroke)}
-              strokeWidth={tmp.property.strokeWidth}
-            />
+            <g key={index.id}>
+              <rect
+                x={tmp.property.position.x}
+                y={tmp.property.position.y}
+                width={tmp.property.size.width}
+                height={tmp.property.size.height}
+                fill={RGBtoHEX(tmp.property.fill)}
+                stroke={RGBtoHEX(tmp.property.stroke)}
+                strokeWidth={tmp.property.strokeWidth}
+              />
+              {renderRect(index.id, rectPosition, rectSize)}
+            </g>
           );
           break;
         }
         case "ellipse": /* complete */ {
           const tmp = index as SvgObject<typeof index.type>;
+
+          rectPosition = {
+            x: tmp.property.position.x - tmp.property.radius.rx,
+            y: tmp.property.position.y - tmp.property.radius.ry,
+          };
+          rectSize = {
+            width: tmp.property.radius.rx * 2,
+            height: tmp.property.radius.ry * 2,
+          };
+
           result.push(
-            <ellipse
-              className={index.title}
-              key={index.id}
-              id={index.id}
-              cx={tmp.property.position.x}
-              cy={tmp.property.position.y}
-              rx={tmp.property.radius.rx}
-              ry={tmp.property.radius.ry}
-              strokeWidth={tmp.property.strokeWidth}
-              fill={RGBtoHEX(tmp.property.fill)}
-              stroke={RGBtoHEX(tmp.property.stroke)}
-            />
+            <g key={index.id}>
+              <ellipse
+                id={index.id}
+                cx={tmp.property.position.x}
+                cy={tmp.property.position.y}
+                rx={tmp.property.radius.rx}
+                ry={tmp.property.radius.ry}
+                strokeWidth={tmp.property.strokeWidth}
+                fill={RGBtoHEX(tmp.property.fill)}
+                stroke={RGBtoHEX(tmp.property.stroke)}
+              />
+              {renderRect(index.id, rectPosition, rectSize)}
+            </g>
           );
           break;
         }
@@ -393,7 +459,6 @@ function Canvas({
           const tmp = index as SvgObject<typeof index.type>;
           result.push(
             <text
-              className={index.title}
               key={index.id}
               id={index.id}
               x={tmp.property.position.x}
@@ -473,9 +538,10 @@ function Canvas({
 
   function shorcutZoom(e: React.KeyboardEvent) {
     if (e.ctrlKey && e.key === "1") setZoom(1);
-
     if (e.ctrlKey && e.key === "0") fitScreen();
   }
+
+  // 키보드 단축키 처리
   function handleKeyDown(e: React.KeyboardEvent) {
     shortcutTool(e);
     shorcutZoom(e);
@@ -484,9 +550,9 @@ function Canvas({
     <div className="wrap">
       <div
         className={`canvas ${tool} 
-          ${keyBind.ctrl ? "ctrl" : ""} 
-          ${keyBind.alt ? "alt" : ""} 
-          ${keyBind.shift ? "shift" : ""}`}
+        ${keyBind.ctrl ? "ctrl" : ""} 
+        ${keyBind.alt ? "alt" : ""} 
+        ${keyBind.shift ? "shift" : ""}`}
         tabIndex={0}
         onKeyDown={handleKeyDown}
         onMouseDown={MouseOnHandler}
