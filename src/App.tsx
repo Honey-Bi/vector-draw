@@ -129,7 +129,7 @@ export default function App() {
 
         const hl = history.length - 1;
         if (hl === -1) setSelect(null);
-        else setSelect(`${history[hl][1]}-${hl}`);
+        else setSelect([`${history[hl][1]}-${hl}`]);
       }
       setTmpHistory([...tmpHistory, tmp]);
       setHistory([...history]);
@@ -142,7 +142,7 @@ export default function App() {
         tmp[3]!.id = id;
         setHistory([...history, [tmp[0], tmp[1], svgList.length, tmp[3]!]]);
         setSvgList([...svgList, tmp[3]!]);
-        setSelect(id);
+        setSelect([id]);
       }
     },
   };

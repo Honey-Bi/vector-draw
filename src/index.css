@@ -341,6 +341,61 @@ ul {
     }
   }
 }
+rect.active {
+  cursor: move;
+}
+.resize {
+  &:nth-child(1) {
+    cursor: nw-resize;
+  }
+  &:nth-child(2) {
+    cursor: n-resize;
+  }
+  &:nth-child(3) {
+    cursor: ne-resize;
+  }
+  &:nth-child(4) {
+    cursor: w-resize;
+  }
+  &:nth-child(5) {
+    cursor: e-resize;
+  }
+  &:nth-child(6) {
+    cursor: sw-resize;
+  }
+  &:nth-child(7) {
+    cursor: s-resize;
+  }
+  &:nth-child(8) {
+    cursor: se-resize;
+  }
+}
+.resizeBox {
+  .resize_1 {
+    cursor: nw-resize;
+  }
+  .resoze_2 {
+    cursor: n-resize;
+  }
+  .resoze_3 {
+    cursor: ne-resize;
+  }
+  .resoze_4 {
+    cursor: w-resize;
+  }
+  .resoze_5 {
+    cursor: e-resize;
+  }
+  .resoze_6 {
+    cursor: se-resize;
+  }
+  .resoze_7 {
+    cursor: s-resize;
+  }
+  .resoze_8 {
+    cursor: sw-resize;
+  }
+}
 legend {
   font-size: 1rem;
 }

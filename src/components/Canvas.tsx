@@ -10,6 +10,7 @@ import {
   SvgType,
   Color,
   History,
+  Radius,
 } from "../types";
 
 type Props = {
@@ -55,10 +56,20 @@ function Canvas({
 
   useEffect(() => {}, [position]);
 
+  const defaultData: { size: Size; position: Position; radius: Radius } = {
+    size: { width: 0, height: 0 },
+    position: { x: 0, y: 0 },
+    radius: { rx: 0, ry: 0 },
+  };
+
   // 마우스 클릭 이벤트
   const MouseOnHandler = (e: React.MouseEvent) => {
     if (canvasRef.current && e.button === 0) {
-      if (isMouseOn) return; // 마우스가 정상적으로 종료되지 않았을시 새실행 방지
+      if (isMouseOn) return; // 마우스가 정상적으로 종료되지 않았을시 재실행 방지
+      const target = e.target as HTMLElement;
+      if (target.classList.contains("resize")) {
+        return;
+      }
       setMouseOn(true);
       const position = getPosition(e.pageX, e.pageY);
       setCPosition(getPosition(e.pageX, e.pageY));
@@ -67,12 +78,27 @@ function Canvas({
       switch (tool) {
         case "select":
           const target = e.target as Element;
+
+          result = {
+            id: "select",
+            title: tool,
+            type: "select",
+            center: defaultData.position,
+            property: {
+              position: position,
+              size: defaultData.size,
+              fill: null,
+              stroke: { r: 0, g: 102, b: 204 },
+              strokeWidth: 2,
+            },
+          } as SvgObject<"rect">;
+
           if (target.id) {
-            setSelect(target.id);
+            setSelect([target.id]);
           } else {
             setSelect(null);
           }
-          return;
+          break;
         case "pencil":
           if (palette.stroke === null) {
             result = ErrorMsg["strokeNull"];
@@ -98,6 +124,7 @@ function Canvas({
             id: `${tool}-${id}`,
             title: tool,
             type: "line",
+            center: defaultData.position,
             property: {
               stroke: palette.stroke,
               strokeWidth: 2,
@@ -115,14 +142,13 @@ function Canvas({
             id: `${tool}-${id}`,
             title: tool,
             type: "rect",
-            position: { x: 0, y: 0 },
-            size: { width: 0, height: 0 },
+            center: defaultData.position,
             property: {
               fill: palette.fill,
               stroke: palette.stroke,
               strokeWidth: palette.stroke ? 1 : 0,
               position: position,
-              size: { width: 0, height: 0 },
+              size: defaultData.size,
             },
           } as SvgObject<"rect">;
           break;
@@ -135,12 +161,13 @@ function Canvas({
             id: `ellipse-${id}`,
             title: tool,
             type: "ellipse",
+            center: defaultData.position,
             property: {
               fill: palette.fill,
               stroke: palette.stroke,
               strokeWidth: palette.stroke ? 1 : 0,
               position: position,
-              radius: { rx: 0, ry: 0 },
+              radius: defaultData.radius,
             },
           } as SvgObject<"ellipse">;
           break;
@@ -191,7 +218,7 @@ function Canvas({
   const MouseMoveHandler = (e: React.MouseEvent) => {
     if (canvasRef.current && isMouseOn) {
       const position = getPosition(e.pageX, e.pageY);
-      let last = svgList[svgList.length - 1];
+      let last = svgList.at(-1);
       switch (tool) {
         case "pencil": /* complete */ {
           const tmp = last as SvgObject<"pencil">;
@@ -204,10 +231,19 @@ function Canvas({
         }
         case "line": /* complete */ {
           const tmp = last as SvgObject<"line">;
-
           tmp.property.position2 = position;
+          // 중앙점 계산
+          tmp.center = {
+            x:
+              Math.abs(tmp.property.position1.x - position.x) / 2 +
+              Math.min(tmp.property.position1.x, position.x),
+            y:
+              Math.abs(tmp.property.position1.y - position.y) / 2 +
+              Math.min(tmp.property.position1.y, position.y),
+          };
           break;
         }
+        case "select":
         case "rect": /* complete */ {
           const tmp = last as SvgObject<"rect">;
           if (position.x > cPosition.x) {
@@ -226,7 +262,10 @@ function Canvas({
             tmp.property.position.y = position.y;
             tmp.property.size.height = cPosition.y - position.y;
           }
-
+          tmp.center = {
+            x: tmp.property.position.x + tmp.property.size.width / 2,
+            y: tmp.property.position.y + tmp.property.size.height / 2,
+          };
           break;
         }
         case "circle": /* complete */ {
@@ -248,6 +287,7 @@ function Canvas({
 
           tmp.property.position.x = (position.x + cPosition.x) / 2;
           tmp.property.position.y = (position.y + cPosition.y) / 2;
+          tmp.center = tmp.property.position;
           break;
         }
         case "shape":
@@ -267,16 +307,39 @@ function Canvas({
     setMouseOn(false);
     let lastIndex = svgList.length - 1;
     let lastSelect = true;
+    const position = getPosition(e.pageX, e.pageY); // 종료 커서 위치
     switch (tool) {
+      case "select":
+        lastSelect = false;
+        svgList.pop();
+        let selectArray = [];
+        for (let index of svgList) {
+          if (
+            Math.max(position.x, cPosition.x) >= index.center.x &&
+            Math.min(position.x, cPosition.x) <= index.center.x &&
+            Math.max(position.y, cPosition.y) >= index.center.y &&
+            Math.min(position.y, cPosition.y) <= index.center.y
+          )
+            selectArray.push(index.id);
+        }
+        if (selectArray.length) {
+          setSelect(selectArray);
+        }
+        break;
       case "pencil":
       case "line":
-      case "rect": {
-        setHistory([...history, ["create", tool, lastIndex, svgList[lastIndex]]]);
-        setTmpHistory([]);
-        break;
-      }
+      case "rect":
       case "circle": {
-        setHistory([...history, ["create", "ellipse", lastIndex, svgList[lastIndex]]]);
+        if (position.x === cPosition.x && position.y === cPosition.y) {
+          setSelect(null);
+          svgList.pop();
+          return;
+        }
+        if (tool === "circle") {
+          setHistory([...history, ["create", "ellipse", lastIndex, svgList[lastIndex]]]);
+        } else {
+          setHistory([...history, ["create", tool, lastIndex, svgList[lastIndex]]]);
+        }
         setTmpHistory([]);
         break;
       }
@@ -289,7 +352,6 @@ function Canvas({
       case "text": {
         break;
       }
-      case "select":
       case "zoom":
       case "spoid":
         lastSelect = false;
@@ -297,7 +359,7 @@ function Canvas({
     }
     if (lastSelect) {
       let last = svgList[lastIndex];
-      setSelect(last.id);
+      setSelect([last.id]);
     }
   };
 
@@ -314,45 +376,59 @@ function Canvas({
   }
 
   function renderRect(id: string, position: Position, size: Size) {
-    let add = [];
     const activeRectSize = 5;
-    if (select && select === id) {
-      add.push(
-        <g fill="white" stroke="black">
+    let result = [];
+    result.push(
+      <rect
+        id={id}
+        key={id}
+        x={position.x}
+        y={position.y}
+        width={size.width}
+        height={size.height}
+        fill="transparent"
+        strokeWidth={1}
+        strokeDasharray={4}
+        className={`${select?.includes(id) ? "active" : ""}`}
+        stroke={`${select?.includes(id) ? "#6fbeff" : "none"}`}
+      />
+    );
+    // 선택되었지 않았을시
+    if (!select || !select.includes(id)) return result;
+
+    const top = position.y - activeRectSize / 2;
+    const middle = position.y + size.height / 2 - activeRectSize / 2;
+    const bottom = position.y + size.height - activeRectSize / 2;
+    const left = position.x - activeRectSize / 2;
+    const center = position.x + size.width / 2 + activeRectSize / 2;
+    const right = position.x + size.width - activeRectSize / 2;
+    const positions = [
+      { x: left, y: top }, // 7
+      { x: center, y: top }, // 8
+      { x: right, y: top }, // 9
+      { x: left, y: middle }, // 4
+      { x: right, y: middle }, // 6
+      { x: left, y: bottom }, // 1
+      { x: center, y: bottom }, // 2
+      { x: right, y: bottom }, // 3
+    ];
+    result.push(
+      <g fill="white" stroke="black" key={`${id}_resize`}>
+        {positions.map((pos, i) => (
           <rect
-            strokeWidth={1}
+            key={i}
+            className="resize"
             width={activeRectSize}
             height={activeRectSize}
-            x={position.x - activeRectSize / 2}
-            y={position.y - activeRectSize / 2}
+            x={pos.x}
+            y={pos.y}
           />
-          {/* 7 */}
-          <rect width={activeRectSize} height={activeRectSize} /> {/* 8 */}
-          <rect width={activeRectSize} height={activeRectSize} /> {/* 9 */}
-          <rect width={activeRectSize} height={activeRectSize} /> {/* 4 */}
-          <rect width={activeRectSize} height={activeRectSize} /> {/* 6 */}
-          <rect width={activeRectSize} height={activeRectSize} /> {/* 1 */}
-          <rect width={activeRectSize} height={activeRectSize} /> {/* 2 */}
-          <rect width={activeRectSize} height={activeRectSize} /> {/* 3 */}
-        </g>
-      );
-    }
-    return (
-      <>
-        <rect
-          id={id}
-          x={position.x}
-          y={position.y}
-          width={size.width}
-          height={size.height}
-          fill="transparent"
-          strokeWidth={1}
-          {...(select ? (select === id ? { stroke: "#6fbeff" } : "") : "")}
-        />
-        {add}
-      </>
+        ))}
+      </g>
     );
+    return result;
   }
+
   // SVG Object list 랜더링 함수
   function renderSvgObject(): JSX.Element {
     let result = [];
@@ -360,6 +436,22 @@ function Canvas({
     let rectSize: Size;
     for (let index of svgList) {
       switch (index.type) {
+        case "select": {
+          const tmp = index as SvgObject<"rect">;
+          result.push(
+            <rect
+              key={index.id}
+              x={tmp.property.position.x}
+              y={tmp.property.position.y}
+              width={tmp.property.size.width}
+              height={tmp.property.size.height}
+              fill={`rgba(6, 106, 255, 0.2)`}
+              stroke={RGBtoHEX(tmp.property.stroke)}
+              strokeWidth={tmp.property.strokeWidth}
+            />
+          );
+          break;
+        }
         case "pencil": /* complete */ {
           const tmp = index as SvgObject<typeof index.type>;
           let d = "";
@@ -388,7 +480,6 @@ function Canvas({
           result.push(
             <g key={index.id}>
               <line
-                id={index.id}
                 x1={tmp.property.position1.x}
                 y1={tmp.property.position1.y}
                 x2={tmp.property.position2.x}
@@ -483,6 +574,26 @@ function Canvas({
         ref={canvasRef}
       >
         {result}
+        <g style={{}}>
+          <rect
+            x={0}
+            y={0}
+            width={50}
+            height={50}
+            stroke="#000"
+            strokeWidth={2}
+            fill="transparent"
+          />
+          <rect
+            x={50}
+            y={50}
+            width={50}
+            height={50}
+            stroke="#000"
+            strokeWidth={2}
+            fill="transparent"
+          />
+        </g>
       </svg>
     );
   }

@@ -15,7 +15,7 @@ type Radius = { rx: number; ry: number };
 
 type Size = { width: number; height: number };
 
-type Select = string | null;
+type Select = string[] | null;
 
 type RGB = { r: number; g: number; b: number };
 type Color = RGB | null;
@@ -98,7 +98,8 @@ type Property<T> = T extends "pencil"
 type SvgObject<T extends SvgType> = {
   id: string;
   title: string;
-  type: T;
+  type: T | "select";
+  center: Position;
   property: Property<T>;
 };
 
@@ -112,6 +113,7 @@ type Modal = {
 
 export type {
   Tools,
+  Radius,
   Position,
   SvgType,
   Select,

@@ -314,14 +314,49 @@ function Panel({
 
   function renderPanel() {
     let result = [];
-    if (select) {
-      const type = select.split("-")[0] as SvgType;
-      const index = Number(select.split("-")[1]);
+    if (select === null) {
+      result.push(
+        <div key="panel-null">
+          <div className="select">Canvas</div>
+          <div className="input-group">
+            <label htmlFor="title">title</label>
+            <input className="panel-input" type="text" id="title" placeholder="NoTitle" />
+          </div>
+          <div className="row">
+            <fieldset className="input-group">
+              <legend>width</legend>
+              <input
+                type="number"
+                id="width"
+                min="1"
+                onChange={handleChange}
+                value={canvasSize.width}
+                className="panel-input"
+              />
+            </fieldset>
+
+            <fieldset className="input-group">
+              <legend>height</legend>
+              <input
+                type="number"
+                id="height"
+                min="1"
+                onChange={handleChange}
+                value={canvasSize.height}
+                className="panel-input"
+              />
+            </fieldset>
+          </div>
+        </div>
+      );
+    } else if (select.length === 1) {
+      const type = select[0].split("-")[0] as SvgType;
+      const index = Number(select[0].split("-")[1]);
       // 오브젝트 이름
       const name = renderName(index);
       const property = renderProperty(index, type);
       result.push(
-        <div key={select}>
+        <div key={select[0]}>
           <div className="select">{type}</div>
           {name}
           {property}
@@ -360,40 +395,6 @@ function Panel({
         </div>
       );
     } else {
-      result.push(
-        <div key={select}>
-          <div className="select">Canvas</div>
-          <div className="input-group">
-            <label htmlFor="title">title</label>
-            <input className="panel-input" type="text" id="title" placeholder="NoTitle" />
-          </div>
-          <div className="row">
-            <fieldset className="input-group">
-              <legend>width</legend>
-              <input
-                type="number"
-                id="width"
-                min="1"
-                onChange={handleChange}
-                value={canvasSize.width}
-                className="panel-input"
-              />
-            </fieldset>
-
-            <fieldset className="input-group">
-              <legend>width</legend>
-              <input
-                type="number"
-                id="width"
-                min="1"
-                onChange={handleChange}
-                value={canvasSize.height}
-                className="panel-input"
-              />
-            </fieldset>
-          </div>
-        </div>
-      );
     }
     return result;
   }
