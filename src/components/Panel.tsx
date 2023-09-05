@@ -110,6 +110,15 @@ function Panel({
       align === "horizontal" ? ["x", "width"] : ["y", "height"];
 
     switch (type) {
+      case "pencil": {
+        // let item = updateList[index] as SvgObject<typeof type>;
+        console.log(align, alignment);
+        if (alignment === "start") {
+        } else if (alignment === "center") {
+        } else {
+        }
+        break;
+      }
       case "line": {
         let item = updateList[index] as SvgObject<typeof type>;
         const min = Math.min(item.property.position1[xy], item.property.position2[xy]);
