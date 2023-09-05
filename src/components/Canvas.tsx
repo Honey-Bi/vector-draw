@@ -34,6 +34,12 @@ const ErrorMsg = {
   notYet: "준비 안됨",
 };
 
+type mouseOn = {
+  tool: boolean;
+  resize: boolean;
+  move: boolean;
+};
+
 function Canvas({
   tool,
   select,
@@ -49,7 +55,8 @@ function Canvas({
   setTmpHistory,
 }: Props) {
   const canvasRef = useRef<SVGSVGElement>(null);
-  const [isMouseOn, setMouseOn] = useState<boolean>(false);
+  const defaultMouseOn: mouseOn = { tool: false, resize: false, move: false };
+  const [isMouseOn, setMouseOn] = useState<mouseOn>(defaultMouseOn);
   const [position, setPostion] = useState<Position>({ x: 0, y: 0 });
   const [cPosition, setCPosition] = useState<Position>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState<number>(1);
@@ -65,20 +72,29 @@ function Canvas({
   // 마우스 클릭 이벤트
   const MouseOnHandler = (e: React.MouseEvent) => {
     if (canvasRef.current && e.button === 0) {
-      if (isMouseOn) return; // 마우스가 정상적으로 종료되지 않았을시 재실행 방지
+      // 마우스가 정상적으로 종료되지 않았을시 재실행 방지
+      if (isMouseOn.tool || isMouseOn.resize || isMouseOn.move) return;
+
       const target = e.target as HTMLElement;
+      // 크기변경 클릭
       if (target.classList.contains("resize")) {
+        setMouseOn((prev) => ({ ...prev, resize: true }));
         return;
       }
-      setMouseOn(true);
+      // 위치이동 클릭
+      if (select?.includes(target.id)) {
+        setMouseOn((prev) => ({ ...prev, move: true }));
+        return;
+      }
+
+      // 도구 클릭
+      setMouseOn((prev) => ({ ...prev, tool: true }));
       const position = getPosition(e.pageX, e.pageY);
       setCPosition(getPosition(e.pageX, e.pageY));
       const id = svgList.length;
       var result: SvgObject<SvgType> | string = "";
       switch (tool) {
         case "select":
-          const target = e.target as Element;
-
           result = {
             id: "select",
             title: tool,
@@ -108,6 +124,7 @@ function Canvas({
             id: `pencil-${id}`,
             title: tool,
             type: "pencil",
+            center: defaultData.position,
             property: {
               stroke: palette.stroke,
               strokeWidth: 1,
@@ -176,6 +193,7 @@ function Canvas({
             result = ErrorMsg["fillStrokeNull"];
             break;
           }
+          result = ErrorMsg["notYet"];
           break;
         case "path":
           result = ErrorMsg["notYet"];
@@ -198,6 +216,7 @@ function Canvas({
               content: "",
             },
           } as SvgObject<"text">;
+          result = ErrorMsg["notYet"];
           break;
         case "zoom":
           zoomIO();
@@ -206,7 +225,7 @@ function Canvas({
           return;
       }
       if (typeof result === "string") {
-        setMouseOn(false);
+        setMouseOn(defaultMouseOn);
         alert(result);
       } else {
         setSvgList([...svgList, result]);
@@ -216,11 +235,13 @@ function Canvas({
 
   // 마우스 클릭 후 이동 이벤트
   const MouseMoveHandler = (e: React.MouseEvent) => {
-    if (canvasRef.current && isMouseOn) {
-      const position = getPosition(e.pageX, e.pageY);
+    if (canvasRef.current === null) return;
+
+    const position = getPosition(e.pageX, e.pageY);
+    if (isMouseOn.tool) {
       let last = svgList.at(-1);
       switch (tool) {
-        case "pencil": /* complete */ {
+        case "pencil": {
           const tmp = last as SvgObject<"pencil">;
           tmp.property.path.push({
             c: "l",
@@ -229,22 +250,13 @@ function Canvas({
           });
           break;
         }
-        case "line": /* complete */ {
+        case "line": {
           const tmp = last as SvgObject<"line">;
           tmp.property.position2 = position;
-          // 중앙점 계산
-          tmp.center = {
-            x:
-              Math.abs(tmp.property.position1.x - position.x) / 2 +
-              Math.min(tmp.property.position1.x, position.x),
-            y:
-              Math.abs(tmp.property.position1.y - position.y) / 2 +
-              Math.min(tmp.property.position1.y, position.y),
-          };
           break;
         }
         case "select":
-        case "rect": /* complete */ {
+        case "rect": {
           const tmp = last as SvgObject<"rect">;
           if (position.x > cPosition.x) {
             // right
@@ -262,13 +274,10 @@ function Canvas({
             tmp.property.position.y = position.y;
             tmp.property.size.height = cPosition.y - position.y;
           }
-          tmp.center = {
-            x: tmp.property.position.x + tmp.property.size.width / 2,
-            y: tmp.property.position.y + tmp.property.size.height / 2,
-          };
+
           break;
         }
-        case "circle": /* complete */ {
+        case "circle": {
           const tmp = last as SvgObject<"ellipse">;
           if (position.x > cPosition.x) {
             // right
@@ -284,10 +293,8 @@ function Canvas({
             // top
             tmp.property.radius.ry = (cPosition.y - position.y) / 2;
           }
-
           tmp.property.position.x = (position.x + cPosition.x) / 2;
           tmp.property.position.y = (position.y + cPosition.y) / 2;
-          tmp.center = tmp.property.position;
           break;
         }
         case "shape":
@@ -297,70 +304,109 @@ function Canvas({
         case "spoid":
           break;
       }
-      setPostion(position);
+    } else if (isMouseOn.resize && select) {
+    } else if (isMouseOn.move && select) {
+      for (let id of select) {
+        const type = id.split("-")[0] as SvgType;
+        const index = Number(id.split("-").at(-1));
+        switch (type) {
+          case "pencil": {
+            const tmp = svgList[index] as SvgObject<typeof type>;
+            tmp.property.path[0].x! += e.movementX;
+            tmp.property.path[0].y! += e.movementY;
+            break;
+          }
+          case "line": {
+            const tmp = svgList[index] as SvgObject<typeof type>;
+            tmp.property.position1.x += e.movementX;
+            tmp.property.position1.y += e.movementY;
+            tmp.property.position2.x += e.movementX;
+            tmp.property.position2.y += e.movementY;
+            break;
+          }
+          case "ellipse":
+          case "rect": {
+            const tmp = svgList[index] as SvgObject<typeof type>;
+            tmp.property.position.x += e.movementX;
+            tmp.property.position.y += e.movementY;
+            break;
+          }
+        }
+      }
     }
+    setPostion(position);
   };
 
   //마우스 클릭 종료 이벤트
   const MouseUpHandler = (e: React.MouseEvent) => {
-    if (!isMouseOn) return; // canvas 내에서 클릭을시작하지 않았다면 중지
-    setMouseOn(false);
+    // canvas 내에서 클릭을시작하지 않았다면 중지
+    if (!isMouseOn.tool && !isMouseOn.resize && !isMouseOn.move) return;
+
     let lastIndex = svgList.length - 1;
     let lastSelect = true;
     const position = getPosition(e.pageX, e.pageY); // 종료 커서 위치
-    switch (tool) {
-      case "select":
-        lastSelect = false;
-        svgList.pop();
-        let selectArray = [];
-        for (let index of svgList) {
-          if (
-            Math.max(position.x, cPosition.x) >= index.center.x &&
-            Math.min(position.x, cPosition.x) <= index.center.x &&
-            Math.max(position.y, cPosition.y) >= index.center.y &&
-            Math.min(position.y, cPosition.y) <= index.center.y
-          )
-            selectArray.push(index.id);
-        }
-        if (selectArray.length) {
-          setSelect(selectArray);
-        }
-        break;
-      case "pencil":
-      case "line":
-      case "rect":
-      case "circle": {
-        if (position.x === cPosition.x && position.y === cPosition.y) {
-          setSelect(null);
+    if (isMouseOn.tool) {
+      switch (tool) {
+        case "select":
+          lastSelect = false;
           svgList.pop();
-          return;
+          let selectArray = [];
+          for (let index of svgList) {
+            if (
+              Math.max(position.x, cPosition.x) >= index.center.x &&
+              Math.min(position.x, cPosition.x) <= index.center.x &&
+              Math.max(position.y, cPosition.y) >= index.center.y &&
+              Math.min(position.y, cPosition.y) <= index.center.y
+            )
+              selectArray.push(index.id);
+          }
+          if (selectArray.length) {
+            setSelect(selectArray);
+          }
+          break;
+        case "pencil":
+        case "line":
+        case "rect":
+        case "circle": {
+          if (position.x === cPosition.x && position.y === cPosition.y) {
+            setSelect(null);
+            svgList.pop();
+            lastSelect = false;
+            break;
+          }
+          if (tool === "circle") {
+            setHistory([
+              ...history,
+              ["create", "ellipse", lastIndex, svgList[lastIndex]],
+            ]);
+          } else {
+            setHistory([...history, ["create", tool, lastIndex, svgList[lastIndex]]]);
+          }
+          setTmpHistory([]);
+          break;
         }
-        if (tool === "circle") {
-          setHistory([...history, ["create", "ellipse", lastIndex, svgList[lastIndex]]]);
-        } else {
-          setHistory([...history, ["create", tool, lastIndex, svgList[lastIndex]]]);
+        case "shape": {
+          break;
         }
-        setTmpHistory([]);
-        break;
+        case "path": {
+          break;
+        }
+        case "text": {
+          break;
+        }
+        case "zoom":
+        case "spoid":
+          lastSelect = false;
+          break;
       }
-      case "shape": {
-        break;
+      if (lastSelect) {
+        let last = svgList[lastIndex];
+        setSelect([last.id]);
       }
-      case "path": {
-        break;
-      }
-      case "text": {
-        break;
-      }
-      case "zoom":
-      case "spoid":
-        lastSelect = false;
-        break;
+    } else if (isMouseOn.resize && select) {
+    } else if (isMouseOn.move && select) {
     }
-    if (lastSelect) {
-      let last = svgList[lastIndex];
-      setSelect([last.id]);
-    }
+    setMouseOn(defaultMouseOn);
   };
 
   // 줌인 함수
@@ -395,7 +441,10 @@ function Canvas({
     );
     // 선택되었지 않았을시
     if (!select || !select.includes(id)) return result;
-
+    svgList[Number(id.split("-").at(-1))].center = {
+      x: position.x + size.width / 2,
+      y: position.y + size.height / 2,
+    };
     const top = position.y - activeRectSize / 2;
     const middle = position.y + size.height / 2 - activeRectSize / 2;
     const bottom = position.y + size.height - activeRectSize / 2;
@@ -412,6 +461,7 @@ function Canvas({
       { x: center, y: bottom }, // 2
       { x: right, y: bottom }, // 3
     ];
+
     result.push(
       <g fill="white" stroke="black" key={`${id}_resize`}>
         {positions.map((pos, i) => (
@@ -445,31 +495,53 @@ function Canvas({
               y={tmp.property.position.y}
               width={tmp.property.size.width}
               height={tmp.property.size.height}
-              fill={`rgba(6, 106, 255, 0.2)`}
+              fill="rgba(6, 106, 255, 0.2)"
               stroke={RGBtoHEX(tmp.property.stroke)}
               strokeWidth={tmp.property.strokeWidth}
             />
           );
           break;
         }
-        case "pencil": /* complete */ {
+        case "pencil": {
           const tmp = index as SvgObject<typeof index.type>;
           let d = "";
-          for (let i of tmp.property.path) d += " " + Object.values(i).join(" ");
-
+          let pointX = tmp.property.path[0].x!;
+          let pointY = tmp.property.path[0].y!;
+          let minX = pointX,
+            maxX = pointX,
+            minY = pointY,
+            maxY = pointY;
+          let firstNo = true;
+          for (let i of tmp.property.path) {
+            d += " " + Object.values(i).join(" ");
+            if (firstNo) {
+              firstNo = false;
+              continue;
+            }
+            pointX += i.x!;
+            pointY += i.y!;
+            minX = Math.min(minX, pointX);
+            maxX = Math.max(maxX, pointX);
+            minY = Math.min(minY, pointY);
+            maxY = Math.max(maxY, pointY);
+          }
+          rectPosition = { x: minX, y: minY };
+          rectSize = { width: maxX - minX, height: maxY - minY };
           result.push(
-            <path
-              key={index.id}
-              id={index.id}
-              strokeWidth={tmp.property.strokeWidth}
-              stroke={RGBtoHEX(tmp.property.stroke)}
-              d={d + " "}
-              fill="none"
-            />
+            <g key={index.id}>
+              <path
+                key={index.id}
+                strokeWidth={tmp.property.strokeWidth}
+                stroke={RGBtoHEX(tmp.property.stroke)}
+                d={d + " "}
+                fill="none"
+              />
+              {renderRect(index.id, rectPosition, rectSize)}
+            </g>
           );
           break;
         }
-        case "line": /* complete */ {
+        case "line": {
           const tmp = index as SvgObject<typeof index.type>;
           const minX = Math.min(tmp.property.position1.x, tmp.property.position2.x);
           const maxX = Math.max(tmp.property.position1.x, tmp.property.position2.x);
@@ -493,7 +565,7 @@ function Canvas({
 
           break;
         }
-        case "rect": /* complete */ {
+        case "rect": {
           const tmp = index as SvgObject<typeof index.type>;
           rectPosition = tmp.property.position;
           rectSize = tmp.property.size;
@@ -513,7 +585,7 @@ function Canvas({
           );
           break;
         }
-        case "ellipse": /* complete */ {
+        case "ellipse": {
           const tmp = index as SvgObject<typeof index.type>;
 
           rectPosition = {
@@ -574,26 +646,6 @@ function Canvas({
         ref={canvasRef}
       >
         {result}
-        <g style={{}}>
-          <rect
-            x={0}
-            y={0}
-            width={50}
-            height={50}
-            stroke="#000"
-            strokeWidth={2}
-            fill="transparent"
-          />
-          <rect
-            x={50}
-            y={50}
-            width={50}
-            height={50}
-            stroke="#000"
-            strokeWidth={2}
-            fill="transparent"
-          />
-        </g>
       </svg>
     );
   }
@@ -638,6 +690,7 @@ function Canvas({
     return "none";
   }
 
+  // 캔버스 크기 스크린 크기에 맞춤 함수
   function fitScreen() {
     if (canvasRef.current) {
       const big = document.getElementsByClassName("canvas")[0].getBoundingClientRect();
