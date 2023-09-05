@@ -66,8 +66,16 @@ export default function App() {
   // 단축키 함수
   function shortcuts(e: React.KeyboardEvent) {
     const key = e.key.toLocaleLowerCase();
+    if (e.ctrlKey && !bindKey.ctrl) {
+      setBindKey((prev) => ({ ...prev, ctrl: true }));
+    }
 
-    setBindKey({ ctrl: e.ctrlKey, alt: e.altKey, shift: e.shiftKey });
+    if (e.altKey && !bindKey.alt) {
+      setBindKey((prev) => ({ ...prev, alt: true }));
+    }
+    if (e.shiftKey && !bindKey.shift) {
+      setBindKey((prev) => ({ ...prev, shift: true }));
+    }
 
     if (e.ctrlKey && e.shiftKey) {
       // ctrl + shift + ?
