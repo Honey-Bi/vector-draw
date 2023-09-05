@@ -141,7 +141,7 @@ export default function Menu({ setModal, commands, history }: Props) {
             </label>
           </li>
           <li>View Wierframes</li>
-          <li>Source</li>
+          <li onClick={() => setModal((prev) => ({ ...prev, Source: true }))}>Source</li>
         </ul>
       </li>
     </ul>
