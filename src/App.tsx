@@ -63,22 +63,6 @@ export default function App() {
     console.log("------------------------");
   }, [svgList]);
 
-  // const [tmpSelect, setTmpSelect] = useState<Select>(select);
-
-  // useEffect(() => {
-  //   setTmpSelect(select);
-  //   if (select) {
-  //     const element = document.getElementById(select) as HTMLElement;
-  //     element.
-  //   }
-  // }, [select]);
-
-  // useEffect(() => {
-  //   if (tmpSelect) {
-
-  //   }
-  // }, [tmpSelect]);
-
   // 단축키 함수
   function shortcuts(e: React.KeyboardEvent) {
     const key = e.key.toLocaleLowerCase();
@@ -220,6 +204,48 @@ export default function App() {
     );
   }
 
+  function renderModal() {
+    let modal = [];
+    if (Modal.Command) {
+      modal.push(
+        <div className="command">
+          <div className="dialog">
+            <div className="title">KeyBoard Shortcut</div>
+            <span
+              className="exit"
+              onClick={() => setModal((prev) => ({ ...prev, Command: false }))}
+            />
+            <div className="multi scroll">{renderShortcut()}</div>
+          </div>
+        </div>
+      );
+    } else if (Modal.Source) {
+      const object = document.getElementsByClassName("svg-canvas")[0].children[0];
+      modal.push(
+        <div className="source">
+          <div className="dialog">
+            <div className="title">Source</div>
+            <span
+              className="exit"
+              onClick={() => setModal((prev) => ({ ...prev, Source: false }))}
+            />
+            <div className="code">{object.outerHTML}</div>
+            <div className="btn-group">
+              <button
+                className="copy"
+                onClick={() => window.navigator.clipboard.writeText(object.outerHTML)}
+              >
+                copy to clipboard
+              </button>
+              <button className="save">save svg file</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return <div className={`modal ${modalTrue() ? "open" : ""}`}>{modal}</div>;
+  }
+
   return (
     <div tabIndex={0} onKeyDown={shortcuts} onKeyUp={keyUp}>
       <Menu
@@ -260,18 +286,7 @@ export default function App() {
           setTmpHistory={setTmpHistory}
         />
       </div>
-      <div className={`modal ${modalTrue() ? "open" : ""}`}>
-        <div className={`command-dialog ${Modal.Command ? "open" : ""}`}>
-          <div className="dialog">
-            <div className="title">KeyBoard Shortcut</div>
-            <span
-              className="command-exit"
-              onClick={() => setModal((prev) => ({ ...prev, Command: false }))}
-            ></span>
-            <div className="multi">{renderShortcut()}</div>
-          </div>
-        </div>
-      </div>
+      {renderModal()}
     </div>
   );
 }
