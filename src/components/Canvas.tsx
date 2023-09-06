@@ -309,26 +309,27 @@ function Canvas({
       for (let id of select) {
         const type = id.split("-")[0] as SvgType;
         const index = Number(id.split("-").at(-1));
+        const z = 1 / zoom;
         switch (type) {
           case "pencil": {
             const tmp = svgList[index] as SvgObject<typeof type>;
-            tmp.property.path[0].x! += e.movementX;
-            tmp.property.path[0].y! += e.movementY;
+            tmp.property.path[0].x! += e.movementX * z;
+            tmp.property.path[0].y! += e.movementY * z;
             break;
           }
           case "line": {
             const tmp = svgList[index] as SvgObject<typeof type>;
-            tmp.property.position1.x += e.movementX;
-            tmp.property.position1.y += e.movementY;
-            tmp.property.position2.x += e.movementX;
-            tmp.property.position2.y += e.movementY;
+            tmp.property.position1.x += e.movementX * z;
+            tmp.property.position1.y += e.movementY * z;
+            tmp.property.position2.x += e.movementX * z;
+            tmp.property.position2.y += e.movementY * z;
             break;
           }
           case "ellipse":
           case "rect": {
             const tmp = svgList[index] as SvgObject<typeof type>;
-            tmp.property.position.x += e.movementX;
-            tmp.property.position.y += e.movementY;
+            tmp.property.position.x += e.movementX * z;
+            tmp.property.position.y += e.movementY * z;
             break;
           }
         }
@@ -380,7 +381,10 @@ function Canvas({
               ["create", "ellipse", lastIndex, svgList[lastIndex]],
             ]);
           } else {
-            setHistory([...history, ["create", tool, lastIndex, svgList[lastIndex]]]);
+            setHistory([
+              ...history,
+              ["create", tool, lastIndex, svgList[lastIndex]],
+            ]);
           }
           setTmpHistory([]);
           break;
@@ -543,10 +547,22 @@ function Canvas({
         }
         case "line": {
           const tmp = index as SvgObject<typeof index.type>;
-          const minX = Math.min(tmp.property.position1.x, tmp.property.position2.x);
-          const maxX = Math.max(tmp.property.position1.x, tmp.property.position2.x);
-          const minY = Math.min(tmp.property.position1.y, tmp.property.position2.y);
-          const maxY = Math.max(tmp.property.position1.y, tmp.property.position2.y);
+          const minX = Math.min(
+            tmp.property.position1.x,
+            tmp.property.position2.x
+          );
+          const maxX = Math.max(
+            tmp.property.position1.x,
+            tmp.property.position2.x
+          );
+          const minY = Math.min(
+            tmp.property.position1.y,
+            tmp.property.position2.y
+          );
+          const maxY = Math.max(
+            tmp.property.position1.y,
+            tmp.property.position2.y
+          );
           rectPosition = { x: minX, y: minY };
           rectSize = { width: maxX - minX, height: maxY - minY };
           result.push(
@@ -654,7 +670,8 @@ function Canvas({
   function renderZoomList(): JSX.Element {
     let result = [];
     const zoomList = [
-      25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400, 500,
+      25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400,
+      500,
     ];
     for (let i of zoomList) {
       result.push(
@@ -693,7 +710,9 @@ function Canvas({
   // 캔버스 크기 스크린 크기에 맞춤 함수
   function fitScreen() {
     if (canvasRef.current) {
-      const big = document.getElementsByClassName("canvas")[0].getBoundingClientRect();
+      const big = document
+        .getElementsByClassName("canvas")[0]
+        .getBoundingClientRect();
       let big_min = Math.min(big.width, big.height);
       let small_max = Math.max(canvasSize.width * 1.1, canvasSize.height * 1.1);
       setZoom((big_min * 100) / small_max / 100);

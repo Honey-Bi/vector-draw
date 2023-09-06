@@ -216,7 +216,7 @@ export default function App() {
     let modal = [];
     if (Modal.Command) {
       modal.push(
-        <div className="command">
+        <div className="command" key="command">
           <div className="dialog">
             <div className="title">KeyBoard Shortcut</div>
             <span
@@ -228,9 +228,10 @@ export default function App() {
         </div>
       );
     } else if (Modal.Source) {
-      const object = document.getElementsByClassName("svg-canvas")[0].children[0];
+      const object =
+        document.getElementsByClassName("svg-canvas")[0].children[0];
       modal.push(
-        <div className="source">
+        <div className="source" key="source">
           <div className="dialog">
             <div className="title">Source</div>
             <span
@@ -241,7 +242,9 @@ export default function App() {
             <div className="btn-group">
               <button
                 className="copy"
-                onClick={() => window.navigator.clipboard.writeText(object.outerHTML)}
+                onClick={() =>
+                  window.navigator.clipboard.writeText(object.outerHTML)
+                }
               >
                 copy to clipboard
               </button>
